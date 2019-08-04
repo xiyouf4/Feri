@@ -24,7 +24,7 @@ typedef struct ThreadPool {
     pthread_t *threads;//存储线程号的地址，create的时候就不用加&了
     pthread_mutex_t mutex;//互斥量
     pthread_cond_t cond;//条件变量
-    size_t thread_count;//线程池中的线程数？
+    size_t thread_count;//线程池中的线程数
     int is_start;
 } ThreadPool;//Threadpool类型的定义
 
@@ -60,12 +60,9 @@ ThreadPool *ThreadPoolInit(size_t thread_count)//参数为线程池中线程的�
     pthread_mutex_init(&pool->mutex, NULL);//互斥量的动态初始化
     pthread_cond_init(&pool->cond, NULL);//条件变量的静态初始化
     pool->is_start = 0;
-<<<<<<< HEAD
     return pool;//1111111111111111111111111
-=======
 
     return pool;
->>>>>>> 9360e130839ceb44bf8ea9340981f2ec28f0006b
 }
 
 void ThreadPoolDestroy(ThreadPool *pool)
