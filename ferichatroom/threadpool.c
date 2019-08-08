@@ -1,5 +1,6 @@
 #include "threadpool.h"
 #include "queue.h"
+#include "run_task.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,6 +28,7 @@ void *threadstart(void *args){
                 }
                 Task *task = (Task *)Queuepop(pool->queue);
                 pthread_mutex_unlock(&pool->mutex);
+                run_task(task->fd);
                 //定义下层函数用于处理每一个client的事情
                 /*if(task && task->callback){
                         task->callback(task->args);
