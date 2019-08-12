@@ -14,6 +14,8 @@ typedef struct agreement {
         char username[20];
         char password[20];
         char answer[20];
+        int success;
+        int failed;
 } Agreement;
 
 void print()                        
@@ -93,9 +95,16 @@ int main()
                 case 2:
                         printf("username:   ");
                         scanf("%s", agreement->username);
-                        printf("what's your real name   ");
+                        printf("what's your real name:   ");
                         scanf("%s", agreement->answer);
-                        int c = pack_out(agreement, conn_fd);
+                        send(conn_fd, agreement, sizeof(struct agreement), 0);                             
+                        char *pass = (char *)malloc(25*sizeof(char));
+                        recv(conn_fd, pass, sizeof(pass), 0);
+                        if (pass != NULL) {
+                            printf("your password is:  %s\n",pass);
+                        } else {
+                            printf("not found!!!\n");
+                        }
                         break;
         }
         return 0;

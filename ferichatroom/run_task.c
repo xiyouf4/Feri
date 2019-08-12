@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <mysql/mysql.h>
 #include <unistd.h>
@@ -62,34 +63,31 @@ int login(char *username, char *password, MYSQL mysql)
         return 0;
 }
 
-int findpassword(char *username, char *answer, MYSQL mysql)
+char *findpassword(char *username, char *answer, MYSQL mysql)
 {
         MYSQL_RES *result = NULL;
         MYSQL_ROW row;
         unsigned int num_fields = 0;
-        unsigned int i;
         char a[500];
-        //char password[25];
+        char *password = (char *)malloc(25*sizeof(char));
         sprintf(a, "select *from account_manage where username=\"%s\" and qa=\"%s\"", username, answer);
         if (mysql_query(&mysql,a) == 0) {
                 result = mysql_store_result(&mysql);
                 num_fields = mysql_num_fields(result);
                 row = mysql_fetch_row(result);
-                for (i = 0; i < num_fields; i++) {
-                        printf("%-10s\n", row[i]);
-                }
-                return 0;                
+                strncpy(password, row[2], 25);
+                return password;                
         } else {                         
             perror("mysql_query");       
-            return -1;                   
+            return NULL;
         }                                
-        return 0;                        
 }
 int run_task(int fd)
 {
         int recvback;
         int regiback;
         int logback;
+        char *pass = (char *)malloc(25*sizeof(char));
         MYSQL mysql = init_mysql();
         agreement *agreement = (struct agreement *)malloc(sizeof(struct agreement));
         recvback = recv(fd, agreement, sizeof(struct agreement), 0);
@@ -106,7 +104,11 @@ int run_task(int fd)
                         send(fd, &logback, sizeof(int), 0);
                         break;
                 case FINDPASSWORDBACK:
-                        findpassword(agreement->username, agreement->answer, mysql);
+                        pass = findpassword(agreement->username, agreement->answer, mysql);
+                        if (pass != NULL) {
+                                send(fd, pass, sizeof(pass), 0);
+                        }
+                        free(pass);
                         break;
         }
         close(fd);
