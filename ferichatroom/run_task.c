@@ -61,6 +61,30 @@ int login(char *username, char *password, MYSQL mysql)
         }
         return 0;
 }
+
+int findpassword(char *username, char *answer, MYSQL mysql)
+{
+        MYSQL_RES *result = NULL;
+        MYSQL_ROW row;
+        unsigned int num_fields = 0;
+        unsigned int i;
+        char a[500];
+        //char password[25];
+        sprintf(a, "select *from account_manage where username=\"%s\" and qa=\"%s\"", username, answer);
+        if (mysql_query(&mysql,a) == 0) {
+                result = mysql_store_result(&mysql);
+                num_fields = mysql_num_fields(result);
+                row = mysql_fetch_row(result);
+                for (i = 0; i < num_fields; i++) {
+                        printf("%-10s\n", row[i]);
+                }
+                return 0;                
+        } else {                         
+            perror("mysql_query");       
+            return -1;                   
+        }                                
+        return 0;                        
+}
 int run_task(int fd)
 {
         int recvback;
@@ -82,6 +106,7 @@ int run_task(int fd)
                         send(fd, &logback, sizeof(int), 0);
                         break;
                 case FINDPASSWORDBACK:
+                        findpassword(agreement->username, agreement->answer, mysql);
                         break;
         }
         close(fd);

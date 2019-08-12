@@ -89,9 +89,14 @@ int main()
                         } else {
                                 printf("register was failed\n");                                               
                         }
-                    break;
+                        break;
                 case 2:
-                    break;
+                        printf("username:   ");
+                        scanf("%s", agreement->username);
+                        printf("what's your real name   ");
+                        scanf("%s", agreement->answer);
+                        int c = pack_out(agreement, conn_fd);
+                        break;
         }
         return 0;
 }
