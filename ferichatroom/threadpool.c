@@ -62,10 +62,10 @@ void Threadpoolcreate(Threadpool *pool)
         }
 }
 
-void Threadpoolpushtask(Threadpool *pool, int fd)
+void Threadpoolpushtask(Threadpool *pool, int ready_fd)
 {
        Task *task = (Task *)malloc(sizeof(Task));
-       task->fd = fd;
+       task->fd = ready_fd;
        pthread_mutex_lock(&pool->mutex);
        Queuepush(pool->queue,task);
        pthread_mutex_unlock(&pool->mutex);
