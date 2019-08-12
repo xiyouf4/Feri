@@ -14,8 +14,6 @@ typedef struct agreement {
         char username[20];
         char password[20];
         char answer[20];
-        int success;
-        int failed;
 } Agreement;
 
 void print()                        
@@ -48,7 +46,7 @@ int pack_out(Agreement *agreement, int conn_fd)
         if (back == SUCCESS) {                                                         
                 backa = 0;
         } else if (back == FAILED) {
-                backa = 1;                                                                                  
+                backa = -1;                                                                                  
         }                                                    
         return backa;
 }
@@ -88,8 +86,8 @@ int main()
                         int b = pack_out(agreement, conn_fd);
                         if (b == 0) {
                                 printf("login was successful\n");                                       
-                        } else {
-                                printf("register was failed\n");                                               
+                        } else if (b == -1){
+                                printf("login was failed\n");                                               
                         }
                         break;
                 case 2:

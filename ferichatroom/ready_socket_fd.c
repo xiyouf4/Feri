@@ -23,6 +23,7 @@ int ready_socket_fd()
         }
         int optval = 1;
         setsockopt(lfd, SOL_SOCKET, SO_REUSEADDR, (void *)&optval, sizeof(int));
+        setsockopt(lfd, SOL_SOCKET, SO_REUSEPORT,(void *)&optval,sizeof(int) );
         memset(&serv_addr, 0, sizeof(struct sockaddr_in));
         serv_addr.sin_family = AF_INET;
         serv_addr.sin_port = htons(SERV_PORT);
@@ -34,14 +35,16 @@ int ready_socket_fd()
         ev.events = EPOLLIN; 
         epoll_ctl(epfd, EPOLL_CTL_ADD, lfd, &ev);
         while (1) {
-                int ready_num;
-                int i;
+                int ready_num = 0;
+                int i = 0;
                 ready_num = epoll_wait(epfd, events, MAXEVENTS, -1);
                 for (i = 0; i < ready_num; i++) {
                         if ((events[i].events & EPOLLERR) || (events[i].events & EPOLLHUP) || !(events[i].events & EPOLLIN)) {
                                 printf("epoll error.1\n");
+                                epoll_ctl(epfd,EPOLL_CTL_DEL,ev.data.fd,&ev);
                         } else if (lfd == events[i].data.fd) {
                                 struct sockaddr cli_addr;
+                                bzero(&cli_addr,sizeof(struct sockaddr));
                                 socklen_t cli_len;
                                 accfd = accept(lfd, (struct sockaddr *)&cli_addr, &cli_len); 
                                 ev.data.fd = accfd;

@@ -39,28 +39,51 @@ int close_mysql(MYSQL mysql)
 int registersql(char *username, char *password, char *answer ,MYSQL mysql)
 {
         char a[500];
+        char b[500];
         sprintf(a, "insert into account_manage values(0,\"%s\",\"%s\",\"%s\")", username, password, answer);
-        printf("%s\n",a);
         if(mysql_query(&mysql, a) == 0)
         {
-            return 0;
+                sprintf(b, "create table %s(username varchar(50),black varchar(50))", username);
+                mysql_query(&mysql, b);
+                return 0;
         } else {
                 perror("mysql_query");
-            return -1;
+                return -1;
         }
 }
 
 int login(char *username, char *password, MYSQL mysql)
 {
-        char a[500];
+        unsigned int i;
+        MYSQL_RES *result = NULL;   
+        MYSQL_ROW row;              
+        MYSQL_FIELD *field;              
+        unsigned int num_fields = 0;
+        char a[400];
+        int retu;
         sprintf(a, "select *from account_manage where username=\"%s\" and password=\"%s\"", username, password);
-        if (mysql_query(&mysql,a) == 0) {
-                return 0;
+        mysql_query(&mysql, a);
+        result = mysql_store_result(&mysql);
+        if (mysql_num_rows(result) > 0) {
+                printf("^^^^^^^^\n");
+               /*result = mysql_store_result(&mysql);
+                num_fields = mysql_num_fields(result);
+                while ((field = mysql_fetch_field(result))) {
+                        printf("%-10s", field->name);
+                }
+                printf("\n");
+                while((row = mysql_fetch_row(result))) {
+                        for (i = 0; i < num_fields; i++) {
+                            printf("%-10s", row[i]);
+                        }
+                }
+                printf("\n");*/
+                retu = 0;
         } else {
-            perror("mysql_query");
-            return -1;
+                printf("******\n");
+                retu = -1;
         }
-        return 0;
+        return retu;
 }
 
 char *findpassword(char *username, char *answer, MYSQL mysql)
@@ -91,6 +114,10 @@ int run_task(int fd)
         MYSQL mysql = init_mysql();
         agreement *agreement = (struct agreement *)malloc(sizeof(struct agreement));
         recvback = recv(fd, agreement, sizeof(struct agreement), 0);
+        if(recvback == 0) //对端正常关闭会触发recv 收到0 同时会触发 epollin 和epollDHUP 
+        {
+            close(fd);
+        }
         if(recvback == -1) {
                 perror("recv");
         }
