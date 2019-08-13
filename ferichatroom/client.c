@@ -43,10 +43,10 @@ int pack_out(Agreement *agreement, int conn_fd)
         char sendbag[500];
         memset(sendbag, 0, 500);
         int back;                                                                      
-        int backa = -1;
         send(conn_fd, agreement, sizeof(struct agreement), 0);                             
         recv(conn_fd, sendbag, sizeof(sendbag), 0);
         recv(conn_fd, &back, sizeof(int), 0);                                          
+        printf("back is %d,line is 49\n", back);
         for (i= 0; i < strlen(sendbag); i++) {
             if (sendbag[i] == '*') {
                 printf("        ");
@@ -55,19 +55,18 @@ int pack_out(Agreement *agreement, int conn_fd)
                 printf("%c", sendbag[i]);
             }
         }
-        if (back == SUCCESS) {                                                         
-                backa = 0;
-        } else if (back == FAILED) {
-                backa = -1;                                                                                  
-        }                                                    
-        return backa;
+        return back;
 }
 
 int main()
 {
+        int back;
+        size_t i;
         char comp[20];
         Agreement *agreement = (struct agreement *)malloc(sizeof(struct agreement));
         int conn_fd;
+        char sendbag[500];
+        memset(sendbag, 0, 500);
         conn_fd = client_init();
         scanf("%d",&agreement->type);
         switch(agreement->type) {
@@ -83,10 +82,13 @@ int main()
                         } while(strcmp(comp, agreement->password) != 0);                                   
                         printf("scurity question||your real name:  ");                                   
                         scanf("%s", agreement->answer);
-                        int a = pack_out(agreement, conn_fd);
-                        if(a == 0) {
+                        int a = 0;
+                        send(conn_fd, agreement, sizeof(struct agreement), 0);                             
+                        recv(conn_fd, &a, sizeof(int), 0);                                          
+                        printf("a=%d,line is 81\n", a);
+                        if(a == SUCCESS) {
                                 printf("register was successful\n");                                       
-                        } else {
+                        } else if (a == FAILED) {
                                 printf("register was failed\n");                                               
                         }
                         break;
@@ -95,12 +97,24 @@ int main()
                         scanf("%s", agreement->username);
                         printf("password:  ");
                         scanf("%s", agreement->password);
-                        int b = pack_out(agreement, conn_fd);
-                        if (b == 0) {
-                                printf("login was successful\n");                                       
-                        } else if (b == -1){
-                                printf("login was failed\n");                                               
+                       // int b = pack_out(agreement, conn_fd);
+                        send(conn_fd, agreement, sizeof(struct agreement), 0);                             
+                        recv(conn_fd, sendbag, sizeof(sendbag), 0);                  
+                        recv(conn_fd, &back, sizeof(int), 0);                        
+                        printf("back is %d,line is 49\n", back);                     
+                        if (back == SUCCESS) {
+                            printf("login was success!\n");
+                        } else if (back == FAILED) {
+                            printf("login was failed!\n");
                         }
+                        for (i= 0; i < strlen(sendbag); i++) {                       
+                        if (sendbag[i] == '*') {                                 
+                                printf("        ");                                  
+                        }                                                        
+                        if (sendbag[i] != '*') {                                 
+                                printf("%c", sendbag[i]);                            
+                        }                                                        
+                        }                                                            
                         break;
                 case 2:
                         printf("username:   ");

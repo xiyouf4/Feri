@@ -14,8 +14,6 @@
 #define LOGIN 1
 #define FINDPASSWORDBACK 2
 
-pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
-
 typedef struct agreement {
         int type;
         char username[20];
@@ -47,14 +45,12 @@ int registersql(char *username, char *password, char *answer ,MYSQL mysql)
         char a[500];
         char b[500];
         sprintf(a, "insert into account_manage values(0,\"%s\",\"%s\",\"%s\")", username, password, answer);
-        if(mysql_query(&mysql, a) == 0)
-        {
+        if (mysql_query(&mysql, a) == 0) {
                 sprintf(b, "create table %s(username varchar(50),black varchar(50))", username);
                 mysql_query(&mysql, b);
                 return 0;
         } else {
-                perror("mysql_query");
-                return -1;
+            return -1;
         }
 }
 
@@ -68,7 +64,6 @@ int login(char *username, char *password, MYSQL mysql, int fd)
         char a[400], sendbag[500], b[2]="*";
         int retu;
         sprintf(a, "select *from account_manage where username=\"%s\" and password=\"%s\"", username, password);
-        pthread_mutex_lock(&mut);
         mysql_query(&mysql, a);
         result = mysql_store_result(&mysql);
         if (mysql_num_rows(result) > 0) {
@@ -88,7 +83,6 @@ int login(char *username, char *password, MYSQL mysql, int fd)
                             strcat(sendbag, b);
                         }
                 }
-                pthread_mutex_unlock(&mut);
                 if (send(fd, sendbag, sizeof(sendbag), 0) == -1) {
                     perror("send");
                 }
@@ -136,10 +130,12 @@ int run_task(int fd, int epfd, struct epoll_event ev)
         }
         if(recvback == -1) {
                 perror("recv");
+                printf("line is %d\n", __LINE__);
         }
         switch(agreement->type) {
                 case REGISTER:
                         regiback = registersql(agreement->username, agreement->password, agreement->answer, mysql);
+                        printf("regiback = %d ,line is 136,run_task.c\n",regiback);
                         send(fd, &regiback, sizeof(int), 0);
                         break;
                 case LOGIN:

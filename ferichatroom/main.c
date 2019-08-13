@@ -17,7 +17,7 @@
 
 int main()
 {
-        Threadpool *pool = Threadpoolinit(10);
+        Threadpool *pool = Threadpoolinit(5);
         Threadpoolcreate(pool);
         int epfd;
         int lfd,accfd;
@@ -64,9 +64,12 @@ int main()
                                 printf("epoll5\n");
                         } else if ( (events[i].events & EPOLLIN)){
                                 Threadpoolpushtask(pool, events[i].data.fd, epfd, events[i]);
+                                sleep(1);
                                 printf("epoll6\n");
                         }
                 }
         }
+        Threadpoolstop(pool);
+        Threadpooldestory(pool);
         return 0;
 }
