@@ -1,14 +1,20 @@
+#include "run_task.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <mysql/mysql.h>
 #include <unistd.h>
+#include <pthread.h>
 #include <sys/socket.h>
+#include <sys/epoll.h>
 #include <sys/types.h>
 
 #define REGISTER 0
 #define LOGIN 1
 #define FINDPASSWORDBACK 2
+
+pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
 
 typedef struct agreement {
         int type;
@@ -62,6 +68,7 @@ int login(char *username, char *password, MYSQL mysql, int fd)
         char a[400], sendbag[500], b[2]="*";
         int retu;
         sprintf(a, "select *from account_manage where username=\"%s\" and password=\"%s\"", username, password);
+        pthread_mutex_lock(&mut);
         mysql_query(&mysql, a);
         result = mysql_store_result(&mysql);
         if (mysql_num_rows(result) > 0) {
@@ -81,6 +88,7 @@ int login(char *username, char *password, MYSQL mysql, int fd)
                             strcat(sendbag, b);
                         }
                 }
+                pthread_mutex_unlock(&mut);
                 if (send(fd, sendbag, sizeof(sendbag), 0) == -1) {
                     perror("send");
                 }
@@ -113,7 +121,7 @@ char *findpassword(char *username, char *answer, MYSQL mysql)
         }                                
 }
 
-int run_task(int fd)
+int run_task(int fd, int epfd, struct epoll_event ev)
 {
         int recvback;
         int regiback;
@@ -146,6 +154,7 @@ int run_task(int fd)
                         free(pass);
                         break;
         }
+        epoll_ctl(epfd, EPOLL_CTL_DEL, fd, &ev);
         close(fd);
         return 0;
 }

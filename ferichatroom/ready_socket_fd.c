@@ -1,7 +1,12 @@
+#include "threadpool.h"
+#include "ready_socket_fd.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/epoll.h>
+#include <mysql/mysql.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -10,14 +15,17 @@
 #define BACKLOG 1000
 #define MAXEVENTS 100
 
-int ready_socket_fd()
+
+struct Ready *ready_socket_fd()
 {
+        struct Ready *ready = (struct Ready *)malloc(sizeof(struct Ready));
         int epfd;
         int lfd,accfd;
         struct epoll_event ev;
         struct epoll_event *events = (struct epoll_event *)malloc(MAXEVENTS*sizeof(struct epoll_event));
         struct sockaddr_in serv_addr;
         lfd = socket(AF_INET, SOCK_STREAM, 0);
+        printf("epoll1\n");
         if (lfd < 0) {
                 printf("error:socket\n");
         }
@@ -25,11 +33,13 @@ int ready_socket_fd()
         setsockopt(lfd, SOL_SOCKET, SO_REUSEADDR, (void *)&optval, sizeof(int));
         setsockopt(lfd, SOL_SOCKET, SO_REUSEPORT,(void *)&optval,sizeof(int) );
         memset(&serv_addr, 0, sizeof(struct sockaddr_in));
+        printf("epoll2\n");
         serv_addr.sin_family = AF_INET;
         serv_addr.sin_port = htons(SERV_PORT);
         serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
         bind(lfd, (struct sockaddr *)&serv_addr, sizeof(struct sockaddr_in));
         listen(lfd, BACKLOG);
+        printf("epoll3\n");
         epfd = epoll_create(5);
         ev.data.fd = lfd;
         ev.events = EPOLLIN; 
@@ -38,6 +48,7 @@ int ready_socket_fd()
                 int ready_num = 0;
                 int i = 0;
                 ready_num = epoll_wait(epfd, events, MAXEVENTS, -1);
+                printf("epoll4\n");
                 for (i = 0; i < ready_num; i++) {
                         if ((events[i].events & EPOLLERR) || (events[i].events & EPOLLHUP) || !(events[i].events & EPOLLIN)) {
                                 printf("epoll error.1\n");
@@ -50,8 +61,14 @@ int ready_socket_fd()
                                 ev.data.fd = accfd;
                                 ev.events = EPOLLIN;
                                 epoll_ctl(epfd, EPOLL_CTL_ADD, accfd, &ev);
-                        } else {
-                               return events[i].data.fd; 
+                                printf("epoll5\n");
+                        } else if ( (events[i].events & EPOLLIN)){
+                                ready->epfd = epfd;
+                                ready->ready_fd = events[i].data.fd;
+                                ready->ev = events[i];
+                                printf("epoll6\n");
+                                readypointer = ready;
+                                sleep(1);
                         }
                 }
         }

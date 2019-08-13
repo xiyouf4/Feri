@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <sys/epoll.h>
 
 typedef struct Threadpool {
         Queue *queue;
@@ -17,6 +18,8 @@ typedef struct Threadpool {
 
 typedef struct Task {
         int fd;
+        int epfd;
+        struct epoll_event ev;
 } Task;
 
 void *threadstart(void *args){
@@ -28,7 +31,7 @@ void *threadstart(void *args){
                 }
                 Task *task = (Task *)Queuepop(pool->queue);
                 pthread_mutex_unlock(&pool->mutex);
-                run_task(task->fd);
+                run_task(task->fd, task->epfd, task->ev);
                 //定义下层函数用于处理每一个client的事情
                 /*if(task && task->callback){
                         task->callback(task->args);
@@ -56,16 +59,18 @@ void Threadpoolcreate(Threadpool *pool)
             return ;
         }
         pool->is_start = 1;
-        int i;
+        size_t i;
         for (i = 0; i < pool->thread_count; i++){
                 pthread_create(&pool->pids[i], NULL, threadstart, (void *)pool);
         }
 }
 
-void Threadpoolpushtask(Threadpool *pool, int ready_fd)
+void Threadpoolpushtask(Threadpool *pool, int ready_fd, int epfd, struct epoll_event ev)
 {
        Task *task = (Task *)malloc(sizeof(Task));
        task->fd = ready_fd;
+       task->epfd = epfd;
+       task->ev = ev;
        pthread_mutex_lock(&pool->mutex);
        Queuepush(pool->queue,task);
        pthread_mutex_unlock(&pool->mutex);
@@ -81,7 +86,7 @@ void Threadpooldestory(Threadpool *pool)
 {
         Threadpoolstop(pool);
         pthread_cond_broadcast(&pool->cond);
-        int i;
+        size_t i;
         for (i = 0; i < pool->thread_count; i++) {
             pthread_join(pool->pids[i], NULL);
         }
