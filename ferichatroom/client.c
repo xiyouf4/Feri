@@ -39,10 +39,22 @@ int client_init()
 
 int pack_out(Agreement *agreement, int conn_fd)
 {
+        size_t i;
+        char sendbag[500];
+        memset(sendbag, 0, 500);
         int back;                                                                      
         int backa = -1;
         send(conn_fd, agreement, sizeof(struct agreement), 0);                             
+        recv(conn_fd, sendbag, sizeof(sendbag), 0);
         recv(conn_fd, &back, sizeof(int), 0);                                          
+        for (i= 0; i < strlen(sendbag); i++) {
+            if (sendbag[i] == '*') {
+                printf("        ");
+            }
+            if (sendbag[i] != '*') {
+                printf("%c", sendbag[i]);
+            }
+        }
         if (back == SUCCESS) {                                                         
                 backa = 0;
         } else if (back == FAILED) {

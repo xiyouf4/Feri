@@ -52,32 +52,39 @@ int registersql(char *username, char *password, char *answer ,MYSQL mysql)
         }
 }
 
-int login(char *username, char *password, MYSQL mysql)
+int login(char *username, char *password, MYSQL mysql, int fd)
 {
         unsigned int i;
         MYSQL_RES *result = NULL;   
         MYSQL_ROW row;              
         MYSQL_FIELD *field;              
         unsigned int num_fields = 0;
-        char a[400];
+        char a[400], sendbag[500], b[2]="*";
         int retu;
         sprintf(a, "select *from account_manage where username=\"%s\" and password=\"%s\"", username, password);
         mysql_query(&mysql, a);
         result = mysql_store_result(&mysql);
         if (mysql_num_rows(result) > 0) {
                 printf("^^^^^^^^\n");
-               /*result = mysql_store_result(&mysql);
+                memset(a,0,400);
+                sprintf(a, "select *from %s", username);
+                mysql_query(&mysql, a);
+                result = mysql_store_result(&mysql);
                 num_fields = mysql_num_fields(result);
                 while ((field = mysql_fetch_field(result))) {
-                        printf("%-10s", field->name);
+                        strcat(sendbag,field->name);
+                        strcat(sendbag, b);
                 }
-                printf("\n");
                 while((row = mysql_fetch_row(result))) {
                         for (i = 0; i < num_fields; i++) {
-                            printf("%-10s", row[i]);
+                            strcat(sendbag,field->name);
+                            strcat(sendbag, b);
                         }
                 }
-                printf("\n");*/
+                if (send(fd, sendbag, sizeof(sendbag), 0) == -1) {
+                    perror("send");
+                }
+                printf("%s\n",sendbag);
                 retu = 0;
         } else {
                 printf("******\n");
@@ -105,6 +112,7 @@ char *findpassword(char *username, char *answer, MYSQL mysql)
             return NULL;
         }                                
 }
+
 int run_task(int fd)
 {
         int recvback;
@@ -127,7 +135,7 @@ int run_task(int fd)
                         send(fd, &regiback, sizeof(int), 0);
                         break;
                 case LOGIN:
-                        logback = login(agreement->username, agreement->password, mysql);
+                        logback = login(agreement->username, agreement->password, mysql, fd);
                         send(fd, &logback, sizeof(int), 0);
                         break;
                 case FINDPASSWORDBACK:
