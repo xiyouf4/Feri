@@ -11,7 +11,7 @@
 #include <netinet/in.h>
 
 #define SERV_PORT 4510
-#define BACKLOG 1000
+#define BACKLOG 100
 #define MAXEVENTS 100
 
 
@@ -58,6 +58,7 @@ int main()
                                 bzero(&cli_addr,sizeof(struct sockaddr));
                                 socklen_t cli_len;
                                 accfd = accept(lfd, (struct sockaddr *)&cli_addr, &cli_len); 
+                                printf("accfd is %d,line is%d\n", accfd, __LINE__);
                                 ev.data.fd = accfd;
                                 ev.events = EPOLLIN;
                                 epoll_ctl(epfd, EPOLL_CTL_ADD, accfd, &ev);

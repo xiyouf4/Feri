@@ -1,4 +1,5 @@
 #include "run_task.h"
+#include "onlineclient.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -68,6 +69,8 @@ int login(char *username, char *password, MYSQL mysql, int fd)
         result = mysql_store_result(&mysql);
         if (mysql_num_rows(result) > 0) {
                 printf("^^^^^^^^\n");
+                printf("fd is=%d,username is=%s\n",fd,username);
+                queueplus(fd,username);
                 memset(a,0,400);
                 sprintf(a, "select *from %s", username);
                 mysql_query(&mysql, a);

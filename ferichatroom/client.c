@@ -58,6 +58,19 @@ int pack_out(Agreement *agreement, int conn_fd)
         return back;
 }
 
+void waslogin()
+{
+        int op;
+        printf("set up(0)     query(1)\n"); 
+        scanf("%d",&op);
+        switch(op) {
+        case 0:
+            break;
+        case 1:
+            break;
+        }
+}
+
 int main()
 {
         int back;
@@ -69,7 +82,8 @@ int main()
         memset(sendbag, 0, 500);
         conn_fd = client_init();
         scanf("%d",&agreement->type);
-        switch(agreement->type) {
+        int m = agreement->type;
+        switch(m) {
                 case 0:
                         printf("\nplease enter your username:  ");                                         
                         scanf("%s", agreement->username);                                                  
@@ -97,7 +111,6 @@ int main()
                         scanf("%s", agreement->username);
                         printf("password:  ");
                         scanf("%s", agreement->password);
-                       // int b = pack_out(agreement, conn_fd);
                         send(conn_fd, agreement, sizeof(struct agreement), 0);                             
                         recv(conn_fd, sendbag, sizeof(sendbag), 0);                  
                         recv(conn_fd, &back, sizeof(int), 0);                        
@@ -114,6 +127,7 @@ int main()
                         if (sendbag[i] != '*') {                                 
                                 printf("%c", sendbag[i]);                            
                         }                                                        
+                        waslogin();
                         }                                                            
                         break;
                 case 2:
