@@ -1,0 +1,1 @@
+void *allbag(void *fd);

@@ -1,6 +1,9 @@
+#include "clientallbag.h"
+
 #include <stdio.h>                                                                                          
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 #include <sys/epoll.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -15,6 +18,13 @@ typedef struct agreement {
         char password[20];
         char answer[20];
 } Agreement;
+
+typedef struct Waslogin {
+        int type;
+        char username[20];
+        char selfname[20];
+        int onlineyon;
+} waslogin;
 
 void print()                        
 {                                   
@@ -58,23 +68,52 @@ int pack_out(Agreement *agreement, int conn_fd)
         return back;
 }
 
-void waslogin()
+void WASLOGIN(int fd, char *username)
 {
         int op;
-        printf("set up(0)     query(1)\n"); 
+        int opa;
+        waslogin *waslogin = (struct Waslogin *)malloc(sizeof(struct Waslogin));
+        //memset(waslogin->username, 0, 20);
+        printf("*set up(0)       query(1)\n"); 
         scanf("%d",&op);
         switch(op) {
         case 0:
-            break;
+                printf("Add friends(0)      delete friends(1)\n");
+                scanf("%d", &opa);
+                if (opa == 0) {
+                        strcpy(waslogin->selfname, username);
+                        printf("selfname = %s, line is%d\n", waslogin->selfname, __LINE__);
+                        waslogin->type = 0;
+                        printf("username:       ");
+                        scanf("%s", waslogin->username);
+                        send(fd, waslogin, sizeof(struct Waslogin), 0);
+                        printf("friends application send success,please waiting for the other party's consent\n");
+
+                } else if (opa == 1) {
+
+                }
+                break;
         case 1:
+                printf("please enter your friends username:     ");
+                scanf("%s", waslogin->username);
+                waslogin->type = 2;
+                send(fd, waslogin, sizeof(struct Waslogin), 0);
+                recv(fd, waslogin, sizeof(struct Waslogin), 0);
+                if(waslogin->onlineyon == 1) {
+                        printf("%s      on-line\n", waslogin->username);
+                } else if (waslogin->onlineyon == 0) {
+                        printf("%s      off-line\n", waslogin->username);
+                }
             break;
         }
 }
+
 
 int main()
 {
         int back;
         size_t i;
+        pthread_t pid;
         char comp[20];
         Agreement *agreement = (struct agreement *)malloc(sizeof(struct agreement));
         int conn_fd;
@@ -116,19 +155,23 @@ int main()
                         recv(conn_fd, &back, sizeof(int), 0);                        
                         printf("back is %d,line is 49\n", back);                     
                         if (back == SUCCESS) {
-                            printf("login was success!\n");
+                                printf("login was success!\n");
+                                pthread_create(&pid, NULL, allbag, (void *)&conn_fd);
                         } else if (back == FAILED) {
-                            printf("login was failed!\n");
+                                printf("login was failed!\n");
                         }
                         for (i= 0; i < strlen(sendbag); i++) {                       
-                        if (sendbag[i] == '*') {                                 
-                                printf("        ");                                  
-                        }                                                        
-                        if (sendbag[i] != '*') {                                 
-                                printf("%c", sendbag[i]);                            
-                        }                                                        
-                        waslogin();
+                                if (sendbag[i] == '*') {                                 
+                                        printf("        ");                                  
+                                }                                                        
+                                if (sendbag[i] != '*') {                                 
+                                        printf("%c", sendbag[i]);                            
+                                }                                                        
                         }                                                            
+                        printf("\n");
+                        while (1) {
+                                WASLOGIN(conn_fd, agreement->username);
+                        } 
                         break;
                 case 2:
                         printf("username:   ");
