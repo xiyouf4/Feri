@@ -1,5 +1,6 @@
 #include "run_task.h"
-#include "onlineclient.h"
+#include "onlinearry.h"
+#include "clientallbag.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -21,6 +22,19 @@ typedef struct agreement {
         char password[20];
         char answer[20];
 } agreement;
+
+struct Waslogin {
+        int type;
+        char username[20];
+        char selfname[20];
+        int onlineyon;
+} ;
+
+struct BAGa {
+        int type;
+        int aona;
+        char application[20];
+};
 
 MYSQL init_mysql(void)                                                                                              
 {
@@ -59,18 +73,25 @@ int login(char *username, char *password, MYSQL mysql, int fd)
 {
         unsigned int i;
         MYSQL_RES *result = NULL;   
-        MYSQL_ROW row;              
+        MYSQL_ROW row, rowa;              
         MYSQL_FIELD *field;              
         unsigned int num_fields = 0;
         char a[400], sendbag[500], b[2]="*";
-        int retu;
+        int only_id, back;
         sprintf(a, "select *from account_manage where username=\"%s\" and password=\"%s\"", username, password);
         mysql_query(&mysql, a);
         result = mysql_store_result(&mysql);
         if (mysql_num_rows(result) > 0) {
                 printf("^^^^^^^^\n");
-                printf("fd is=%d,username is=%s\n",fd,username);
-                queueplus(fd,username);
+                back = 0;
+                send(fd, &back, sizeof(int), 0);
+                rowa = mysql_fetch_row(result);
+                only_id = *rowa[0]-48;
+                mess[only_id].yon = 1;
+                mess[only_id].fd = fd;
+                strcpy(mess[only_id].username, username);
+                printf("*****%s\n", mess[only_id].username);
+                printf("*****%d\n", mess[only_id].yon);
                 memset(a,0,400);
                 sprintf(a, "select *from %s", username);
                 mysql_query(&mysql, a);
@@ -86,16 +107,14 @@ int login(char *username, char *password, MYSQL mysql, int fd)
                             strcat(sendbag, b);
                         }
                 }
-                if (send(fd, sendbag, sizeof(sendbag), 0) == -1) {
-                    perror("send");
-                }
+                send(fd, sendbag, sizeof(sendbag), 0);
                 printf("%s\n",sendbag);
-                retu = 0;
         } else {
-                printf("******\n");
-                retu = -1;
+                back = -1;
+                send(fd, &back, sizeof(int), 0);
+                printf("******@@@@@\n");
         }
-        return retu;
+        return 0;
 }
 
 char *findpassword(char *username, char *answer, MYSQL mysql)
@@ -118,11 +137,43 @@ char *findpassword(char *username, char *answer, MYSQL mysql)
         }                                
 }
 
+void WASLOGIN(int fd)
+{
+        int op, i;
+        struct Waslogin *waslogin = (struct Waslogin *)malloc(sizeof(struct Waslogin)); 
+                printf("%dis ok\n",__LINE__);
+        recv(fd, waslogin, sizeof(struct Waslogin), 0);
+                printf("%dis ok\n",__LINE__);
+        op = waslogin->type;
+        switch(op) {
+        case 0:
+            break;
+        case 1:
+            break;
+        case 2:
+                printf("%dis ok\n",__LINE__);
+            for (i = 0; i < 1000; i++) {
+                if (strcmp(mess[i].username, waslogin->username) == 0) {
+                    printf("username:    %s",waslogin->username);
+                    waslogin->onlineyon = 1;
+                    break;
+                }
+            }
+                printf("%dis ok\n",__LINE__);
+            if (i == 1000) {
+                waslogin->onlineyon = 0;
+            }
+                printf("%dis ok\n",__LINE__);
+            send(fd, waslogin, sizeof(struct Waslogin), 0);
+                printf("%dis ok\n",__LINE__);
+            break;
+        }
+}
+
 int run_task(int fd, int epfd, struct epoll_event ev)
 {
         int recvback;
         int regiback;
-        int logback;
         char *pass = (char *)malloc(25*sizeof(char));
         MYSQL mysql = init_mysql();
         agreement *agreement = (struct agreement *)malloc(sizeof(struct agreement));
@@ -142,8 +193,8 @@ int run_task(int fd, int epfd, struct epoll_event ev)
                         send(fd, &regiback, sizeof(int), 0);
                         break;
                 case LOGIN:
-                        logback = login(agreement->username, agreement->password, mysql, fd);
-                        send(fd, &logback, sizeof(int), 0);
+                        login(agreement->username, agreement->password, mysql, fd);
+                        WASLOGIN(fd);
                         break;
                 case FINDPASSWORDBACK:
                         pass = findpassword(agreement->username, agreement->answer, mysql);

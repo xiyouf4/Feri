@@ -73,7 +73,6 @@ void WASLOGIN(int fd, char *username)
         int op;
         int opa;
         waslogin *waslogin = (struct Waslogin *)malloc(sizeof(struct Waslogin));
-        //memset(waslogin->username, 0, 20);
         printf("*set up(0)       query(1)\n"); 
         scanf("%d",&op);
         switch(op) {
@@ -151,11 +150,20 @@ int main()
                         printf("password:  ");
                         scanf("%s", agreement->password);
                         send(conn_fd, agreement, sizeof(struct agreement), 0);                             
-                        recv(conn_fd, sendbag, sizeof(sendbag), 0);                  
                         recv(conn_fd, &back, sizeof(int), 0);                        
-                        printf("back is %d,line is 49\n", back);                     
+                        printf("%d is ok\n",__LINE__);
+                        printf("******back is %d,line is 49\n", back);                     
                         if (back == SUCCESS) {
                                 printf("login was success!\n");
+                                recv(conn_fd, sendbag, sizeof(sendbag), 0);                  
+                                for (i= 0; i < strlen(sendbag); i++) {   
+                                        if (sendbag[i] == '*') {         
+                                                printf("        ");      
+                                        }                                
+                                        if (sendbag[i] != '*') {         
+                                                printf("%c", sendbag[i]);
+                                        }                                
+                                }                                        
                                 pthread_create(&pid, NULL, allbag, (void *)&conn_fd);
                         } else if (back == FAILED) {
                                 printf("login was failed!\n");
@@ -169,9 +177,9 @@ int main()
                                 }                                                        
                         }                                                            
                         printf("\n");
-                        while (1) {
+                        //while (1) {
                                 WASLOGIN(conn_fd, agreement->username);
-                        } 
+                        //} 
                         break;
                 case 2:
                         printf("username:   ");
