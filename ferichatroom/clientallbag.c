@@ -1,3 +1,4 @@
+#include "clientallbag.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
@@ -20,15 +21,18 @@ struct BAGa {
 
 void *allbag(void *fd)
 {
+        printf("%d is ok\n",__LINE__);
         int conn_fd;
         conn_fd = *((int *)fd);
-        struct BAG *temp, *start, *pnew;
+        struct BAG *temp, *pnew;
         struct BAGa *pack;
+        printf("%d is ok\n",__LINE__);
         pack = (struct BAGa *)malloc(sizeof(struct BAGa));
         start = (struct BAG *)malloc(sizeof(struct BAG));
         pnew = (struct BAG *)malloc(sizeof(struct BAG));
         start->next = NULL;
         temp = start;
+        printf("%d is ok\n",__LINE__);
         while(1) {
                 recv(conn_fd, pack, sizeof(struct BAG), 0);
                 printf("%d is ok\n",__LINE__);

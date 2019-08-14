@@ -26,6 +26,20 @@ typedef struct Waslogin {
         int onlineyon;
 } waslogin;
 
+
+struct BAG {                 
+        int type;            
+        int aona;            
+        char application[20];
+        struct BAG *next;
+};
+
+struct BAGa {                 
+        int type;            
+        int aona;            
+        char application[20];
+};                           
+
 void print()                        
 {                                   
         printf("Lgoin(1)\n");       
@@ -40,7 +54,7 @@ int client_init()
         memset(&serv_addr, 0, sizeof(struct sockaddr_in));                        
         serv_addr.sin_family = AF_INET;                                           
         serv_addr.sin_port = htons(4510);                                         
-        inet_aton("192.168.3.96", &serv_addr.sin_addr);                           
+        inet_aton("192.168.1.132", &serv_addr.sin_addr);                           
         conn_fd = socket(AF_INET, SOCK_STREAM, 0);                                
         connect(conn_fd , (struct sockaddr *)&serv_addr, sizeof(struct sockaddr));
         print();                                                                  
@@ -72,9 +86,10 @@ void WASLOGIN(int fd, char *username)
 {
         int op;
         int opa;
-        int back;
+        int back, respond;
         waslogin *waslogin = (struct Waslogin *)malloc(sizeof(struct Waslogin));
-        printf("*set up(0)       query(1)\n"); 
+        struct BAG *temp = (struct BAG *)malloc(sizeof(struct BAG));
+        printf("*set up(0)       query(1)       friends application(2)\n"); 
         scanf("%d",&op);
         switch(op) {
         case 0:
@@ -109,7 +124,19 @@ void WASLOGIN(int fd, char *username)
                 } else if (waslogin->onlineyon == 0) {
                         printf("%s      off-line\n", waslogin->username);
                 }
-            break;
+                break;
+        case 2:
+                    temp = start->next;
+                    while(temp != NULL) {
+                            if(temp->type == 0) {
+                                    printf("%s wants to be your friend\n",temp->application);
+                                    printf("agree(0)        refuse(1)\n");
+                                    scanf("%d", &respond);
+                                    send(fd, &respond, sizeof(int), 0);
+                            }
+                            temp = temp->next;
+                    }
+                break;
         }
 }
 
@@ -171,8 +198,10 @@ int main()
                                         }                                
                                 }                                        
                                 printf("\n");
-                                WASLOGIN(conn_fd, agreement->username);
                                 pthread_create(&pid, NULL, allbag, (void *)&conn_fd);
+                                WASLOGIN(conn_fd, agreement->username);
+                                printf("%d is ok\n",__LINE__);
+                                printf("%d is ok\n",__LINE__);
                         } else if (back == FAILED) {
                                 printf("login was failed!\n");
                         }
