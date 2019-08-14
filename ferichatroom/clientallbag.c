@@ -29,16 +29,14 @@ void *allbag(void *fd)
         pnew = (struct BAG *)malloc(sizeof(struct BAG));
         start->next = NULL;
         temp = start;
-
         while(1) {
                 recv(conn_fd, pack, sizeof(struct BAG), 0);
+                printf("%d is ok\n",__LINE__);
                 pnew->type = pack->type;                                            
                 strcpy(pnew->application, pack->application);                         
                 temp->next = pnew;                                        
                 temp = pnew;                                              
                 printf("**line is=%d       %d\n",__LINE__,pack->type);
                 printf("**line is=%d       %s\n",__LINE__,pack->application);      
-                sleep(100);
         }
-
 }

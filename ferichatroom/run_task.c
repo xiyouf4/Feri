@@ -140,25 +140,39 @@ char *findpassword(char *username, char *answer, MYSQL mysql)
 void WASLOGIN(int fd)
 {
         int op, i;
+        int back;
         struct Waslogin *waslogin = (struct Waslogin *)malloc(sizeof(struct Waslogin)); 
-                printf("%dis ok\n",__LINE__);
+        struct BAGa *pack = (struct BAGa *)malloc(sizeof(struct BAGa));
+        printf("%dis ok\n",__LINE__);
         recv(fd, waslogin, sizeof(struct Waslogin), 0);
-                printf("%dis ok\n",__LINE__);
+        printf("%dis ok\n",__LINE__);
         op = waslogin->type;
         switch(op) {
         case 0:
+                 printf("%dis ok\n",__LINE__);                                              
+                 for (i = 0; i < 1000; i++) {                                
+                     if (strcmp(mess[i].username, waslogin->username) == 0) {
+                         strcpy(pack->application, mess[i].username);
+                         break;                                              
+                     }                                                       
+                 }
+                 if (i != 1000) {
+                 send(mess[i].fd, pack, sizeof(struct BAGa), 0);
+                 back = 0;                                      
+                 send(fd, &back, sizeof(int), 0);               
+                 }
+                 printf("%dis ok\n",__LINE__);                               
             break;
         case 1:
             break;
         case 2:
                 printf("%dis ok\n",__LINE__);
-            for (i = 0; i < 1000; i++) {
-                if (strcmp(mess[i].username, waslogin->username) == 0) {
-                    printf("username:    %s",waslogin->username);
-                    waslogin->onlineyon = 1;
-                    break;
+                for (i = 0; i < 1000; i++) {
+                    if (strcmp(mess[i].username, waslogin->username) == 0) {
+                        waslogin->onlineyon = 1;
+                        break;
+                    }
                 }
-            }
                 printf("%dis ok\n",__LINE__);
             if (i == 1000) {
                 waslogin->onlineyon = 0;

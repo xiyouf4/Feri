@@ -72,6 +72,7 @@ void WASLOGIN(int fd, char *username)
 {
         int op;
         int opa;
+        int back;
         waslogin *waslogin = (struct Waslogin *)malloc(sizeof(struct Waslogin));
         printf("*set up(0)       query(1)\n"); 
         scanf("%d",&op);
@@ -86,7 +87,12 @@ void WASLOGIN(int fd, char *username)
                         printf("username:       ");
                         scanf("%s", waslogin->username);
                         send(fd, waslogin, sizeof(struct Waslogin), 0);
-                        printf("friends application send success,please waiting for the other party's consent\n");
+                        recv(fd, &back, sizeof(int), 0);
+                        if (back == 0) {
+                                printf("friends application send success,please waiting for the other party's consent!\n");
+                        } else {
+                            printf("add friends application send false!!\n");
+                        }
 
                 } else if (opa == 1) {
 
@@ -164,22 +170,12 @@ int main()
                                                 printf("%c", sendbag[i]);
                                         }                                
                                 }                                        
+                                printf("\n");
+                                WASLOGIN(conn_fd, agreement->username);
                                 pthread_create(&pid, NULL, allbag, (void *)&conn_fd);
                         } else if (back == FAILED) {
                                 printf("login was failed!\n");
                         }
-                        for (i= 0; i < strlen(sendbag); i++) {                       
-                                if (sendbag[i] == '*') {                                 
-                                        printf("        ");                                  
-                                }                                                        
-                                if (sendbag[i] != '*') {                                 
-                                        printf("%c", sendbag[i]);                            
-                                }                                                        
-                        }                                                            
-                        printf("\n");
-                        //while (1) {
-                                WASLOGIN(conn_fd, agreement->username);
-                        //} 
                         break;
                 case 2:
                         printf("username:   ");
