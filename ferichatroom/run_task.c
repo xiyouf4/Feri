@@ -33,7 +33,9 @@ struct Waslogin {
 struct BAGa {
         int type;
         int aona;
+        char messagefrom[20];
         char application[20];
+        char message[1000];
 };
 
 MYSQL init_mysql(void)                                                                                              
@@ -147,7 +149,7 @@ void WASLOGIN(int fd, MYSQL mysql)
 {
         char a[300];
         char b[300];
-        int op, i;
+        int op, i, pchat;
         int back, respond = -1;
         struct Waslogin *waslogin = (struct Waslogin *)malloc(sizeof(struct Waslogin)); 
         struct BAGa *pack = (struct BAGa *)malloc(sizeof(struct BAGa));
@@ -156,7 +158,7 @@ void WASLOGIN(int fd, MYSQL mysql)
         printf("%dis ok\n",__LINE__);
         op = waslogin->type;
         switch(op) {
-        case 0:
+        case 0://添加好友
                  printf("%dis ok\n",__LINE__);                                              
                  for (i = 0; i < 1000; i++) {                                
                      if (strcmp(mess[i].username, waslogin->username) == 0) {
@@ -174,7 +176,7 @@ void WASLOGIN(int fd, MYSQL mysql)
             break;
         case 1:
             break;
-        case 2:
+        case 2://查看好友是否在线
                 printf("%dis ok\n",__LINE__);
                 for (i = 0; i < 1000; i++) {
                     if (strcmp(mess[i].username, waslogin->username) == 0) {
@@ -188,20 +190,26 @@ void WASLOGIN(int fd, MYSQL mysql)
                 }
                 printf("%dis ok\n",__LINE__);
                 send(fd, waslogin, sizeof(struct Waslogin), 0);
-                printf("%dis ok\n",__LINE__);
+                recv(fd, &pchat, sizeof(int), 0);
+                if (pchat == 0) {
+                        recv(fd, pack, sizeof(struct BAGa), 0);
+                        send(mess[i].fd, pack, sizeof(struct BAGa), 0);
+                } else if (pchat == 1) {
+                        break;
+                }
                 break;
-        case 3:
-                        recv(fd, &respond, sizeof(int), 0);                                                               
-                        printf("!@#respond= %d\n",respond);                                                               
-                        if (respond == 0) {                                                                               
-                                sprintf(a, "insert into %s values(\"%s\",\"no\")",waslogin->selfname, waslogin->username);
-                                sprintf(b, "insert into %s values(\"%s\",\"no\")",waslogin->username, waslogin->selfname);
-                                printf("%s\n", a);                                                                        
-                                printf("%s\n", b);                                                                        
-                                mysql_query(&mysql,a);                                                                    
-                                mysql_query(&mysql,b);                                                                    
-                                printf("lalalala,haoyoutianjiachenggong\n");                                              
-                        }                                                                                                 
+        case 3://add friends
+                recv(fd, &respond, sizeof(int), 0);                                                               
+                printf("!@#respond= %d\n",respond);                                                               
+                if (respond == 0) {                                                                               
+                        sprintf(a, "insert into %s values(\"%s\",\"no\")",waslogin->selfname, waslogin->username);
+                        sprintf(b, "insert into %s values(\"%s\",\"no\")",waslogin->username, waslogin->selfname);
+                        printf("%s\n", a);                                                                        
+                        printf("%s\n", b);                                                                        
+                        mysql_query(&mysql,a);                                                                    
+                        mysql_query(&mysql,b);                                                                    
+                        printf("lalalala,haoyoutianjiachenggong\n");                                              
+                }                                                                                                 
                 break;
         }
 }

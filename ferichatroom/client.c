@@ -30,14 +30,18 @@ typedef struct Waslogin {
 struct BAG {                 
         int type;            
         int aona;            
+        char messagefrom[20];
         char application[20];
+        char message[1000];
         struct BAG *next;
 };
 
 struct BAGa {                 
         int type;            
         int aona;            
+        char messagefrom[20];
         char application[20];
+        char message[1000];
 };                           
 
 void print()                        
@@ -85,11 +89,12 @@ int pack_out(Agreement *agreement, int conn_fd)
 void WASLOGIN(int fd, char *username)
 {
         int op;
-        int opa;
+        int opa, pchat, goon = 1;
         int back, respond;
         waslogin *waslogin = (struct Waslogin *)malloc(sizeof(struct Waslogin));
         struct BAG *temp = (struct BAG *)malloc(sizeof(struct BAG));
-        printf("*set up(0)       query(1)       friends application(2)\n"); 
+        struct BAGa *conversation = (struct BAGa *)malloc(sizeof(struct BAGa));
+        printf("*set up(0)       query(1)       message box(2)\n"); 
         scanf("%d",&op);
         switch(op) {
         case 0:
@@ -122,6 +127,23 @@ void WASLOGIN(int fd, char *username)
                 recv(fd, waslogin, sizeof(struct Waslogin), 0);
                 if(waslogin->onlineyon == 1) {
                         printf("%s      on-line\n", waslogin->username);
+                        printf("private chat with him(0)        sign out(1)\n");
+                        scanf("%d", &pchat);
+                        send(fd, &pchat, sizeof(int), 0);
+                        if (pchat == 0) {
+                                printf("goon enter 1,sign out enter 0\n");      
+                                while(goon) {
+                                        printf("conversation bar:   ");    
+                                        scanf("%s", conversation->message);
+                                        conversation->type = 1;
+                                        strcpy(conversation->messagefrom, username);
+                                        send(fd, conversation, sizeof(struct BAGa), 0);
+                                        printf("%d is ok\n",__LINE__);
+                                        scanf("%d",&goon);
+                                }
+                        } else if (pchat == 1) {
+                                break;
+                        }
                 } else if (waslogin->onlineyon == 0) {
                         printf("%s      off-line\n", waslogin->username);
                 }
@@ -140,6 +162,10 @@ void WASLOGIN(int fd, char *username)
                                 send(fd, &respond, sizeof(int), 0);
                                 printf("!@#$respond =%d\n", respond);
                                 break;
+                        }
+                        if (temp->type == 1) {
+                                printf("%s's message :", temp->messagefrom);
+                                printf("%s\n", temp->message);
                         }
                         temp = temp->next;
                     }

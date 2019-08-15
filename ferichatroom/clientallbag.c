@@ -9,14 +9,18 @@
 struct BAG {
         int type;
         int aona;
+        char messagefrom[20];
         char application[20];
+        char message[1000];
         struct BAG *next;
 };
 
 struct BAGa {                 
         int type;            
         int aona;            
+        char messagefrom[20];
         char application[20];
+        char message[1000];
 };                           
 
 void *allbag(void *fd)
@@ -38,6 +42,8 @@ void *allbag(void *fd)
                 printf("%d is ok\n",__LINE__);
                 pnew->type = pack->type;                                            
                 strcpy(pnew->application, pack->application);                         
+                strcpy(pnew->messagefrom, pack->messagefrom);                         
+                strcpy(pnew->message, pack->message);                         
                 temp->next = pnew;                                        
                 temp = pnew;                                              
                 printf("**line is=%d       %d\n",__LINE__,pack->type);
