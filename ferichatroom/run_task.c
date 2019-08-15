@@ -92,22 +92,28 @@ int login(char *username, char *password, MYSQL mysql, int fd)
                 strcpy(mess[only_id].username, username);
                 printf("*****%s\n", mess[only_id].username);
                 printf("*****%d\n", mess[only_id].yon);
-                memset(a,0,400);
+                 printf("%dis ok\n",__LINE__);                                              
                 sprintf(a, "select *from %s", username);
                 mysql_query(&mysql, a);
                 result = mysql_store_result(&mysql);
                 num_fields = mysql_num_fields(result);
+                 printf("%dis ok\n",__LINE__);                                              
                 while ((field = mysql_fetch_field(result))) {
                         strcat(sendbag,field->name);
                         strcat(sendbag, b);
+                 printf("%dis ok\n",__LINE__);                                              
                 }
                 while((row = mysql_fetch_row(result))) {
+                 printf("%dis ok\n",__LINE__);                                              
                         for (i = 0; i < num_fields; i++) {
-                            strcat(sendbag,field->name);
+                 printf("%dis ok\n",__LINE__);                                              
+                            strcat(sendbag,row[i]);
                             strcat(sendbag, b);
                         }
                 }
+                 printf("%dis ok\n",__LINE__);                                              
                 send(fd, sendbag, sizeof(sendbag), 0);
+                 printf("%dis ok\n",__LINE__);                                              
                 printf("%s\n",sendbag);
         } else {
                 back = -1;
@@ -142,7 +148,7 @@ void WASLOGIN(int fd, MYSQL mysql)
         char a[300];
         char b[300];
         int op, i;
-        int back, respond;
+        int back, respond = -1;
         struct Waslogin *waslogin = (struct Waslogin *)malloc(sizeof(struct Waslogin)); 
         struct BAGa *pack = (struct BAGa *)malloc(sizeof(struct BAGa));
         printf("%dis ok\n",__LINE__);
@@ -163,16 +169,7 @@ void WASLOGIN(int fd, MYSQL mysql)
                         send(mess[i].fd, pack, sizeof(struct BAGa), 0);
                         back = 0;                                      
                         send(fd, &back, sizeof(int), 0);               
-                        recv(fd, &respond, sizeof(int), 0);
-                        if (respond == 0) {
-                                sprintf(a, "insert into %s values(\"%s\",\"no\")",waslogin->selfname, waslogin->username);
-                                sprintf(b, "insert into %s values(\"%s\",\"no\")",waslogin->username, waslogin->selfname);
-                                printf("%s\n", a);
-                                printf("%s\n", b);
-                                mysql_query(&mysql,a);
-                                mysql_query(&mysql,b);
-                                printf("lalalala,haoyoutianjiachenggong\n");
-                        }
+                 }
                  printf("%dis ok\n",__LINE__);                               
             break;
         case 1:
@@ -186,14 +183,26 @@ void WASLOGIN(int fd, MYSQL mysql)
                     }
                 }
                 printf("%dis ok\n",__LINE__);
-            if (i == 1000) {
-                waslogin->onlineyon = 0;
-            }
+                if (i == 1000) {
+                        waslogin->onlineyon = 0;
+                }
                 printf("%dis ok\n",__LINE__);
-            send(fd, waslogin, sizeof(struct Waslogin), 0);
+                send(fd, waslogin, sizeof(struct Waslogin), 0);
                 printf("%dis ok\n",__LINE__);
-            break;
-            }
+                break;
+        case 3:
+                        recv(fd, &respond, sizeof(int), 0);                                                               
+                        printf("!@#respond= %d\n",respond);                                                               
+                        if (respond == 0) {                                                                               
+                                sprintf(a, "insert into %s values(\"%s\",\"no\")",waslogin->selfname, waslogin->username);
+                                sprintf(b, "insert into %s values(\"%s\",\"no\")",waslogin->username, waslogin->selfname);
+                                printf("%s\n", a);                                                                        
+                                printf("%s\n", b);                                                                        
+                                mysql_query(&mysql,a);                                                                    
+                                mysql_query(&mysql,b);                                                                    
+                                printf("lalalala,haoyoutianjiachenggong\n");                                              
+                        }                                                                                                 
+                break;
         }
 }
 

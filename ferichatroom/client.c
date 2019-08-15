@@ -54,7 +54,7 @@ int client_init()
         memset(&serv_addr, 0, sizeof(struct sockaddr_in));                        
         serv_addr.sin_family = AF_INET;                                           
         serv_addr.sin_port = htons(4510);                                         
-        inet_aton("192.168.1.132", &serv_addr.sin_addr);                           
+        inet_aton("192.168.3.96", &serv_addr.sin_addr);                           
         conn_fd = socket(AF_INET, SOCK_STREAM, 0);                                
         connect(conn_fd , (struct sockaddr *)&serv_addr, sizeof(struct sockaddr));
         print();                                                                  
@@ -103,6 +103,7 @@ void WASLOGIN(int fd, char *username)
                         scanf("%s", waslogin->username);
                         send(fd, waslogin, sizeof(struct Waslogin), 0);
                         recv(fd, &back, sizeof(int), 0);
+                        printf("back is%d\n", back);
                         if (back == 0) {
                                 printf("friends application send success,please waiting for the other party's consent!\n");
                         } else {
@@ -126,15 +127,21 @@ void WASLOGIN(int fd, char *username)
                 }
                 break;
         case 2:
-                    temp = start->next;
-                    while(temp != NULL) {
-                            if(temp->type == 0) {
-                                    printf("%s wants to be your friend\n",temp->application);
-                                    printf("agree(0)        refuse(1)\n");
-                                    scanf("%d", &respond);
-                                    send(fd, &respond, sizeof(int), 0);
-                            }
-                            temp = temp->next;
+                waslogin->type = 3;
+                temp = start->next;
+                while(temp != NULL) {
+                        if(temp->type == 0) {
+                                printf("%s wants to be your friend\n",temp->application);
+                                strcpy(waslogin->username,username);
+                                strcpy(waslogin->selfname, temp->application);
+                                send(fd, waslogin, sizeof(struct Waslogin), 0);
+                                printf("agree(0)        refuse(1)\n");
+                                scanf("%d", &respond);
+                                send(fd, &respond, sizeof(int), 0);
+                                printf("!@#$respond =%d\n", respond);
+                                break;
+                        }
+                        temp = temp->next;
                     }
                 break;
         }
@@ -143,7 +150,7 @@ void WASLOGIN(int fd, char *username)
 
 int main()
 {
-        int back;
+        int back, star = 0;
         size_t i;
         pthread_t pid;
         char comp[20];
@@ -191,7 +198,11 @@ int main()
                                 recv(conn_fd, sendbag, sizeof(sendbag), 0);                  
                                 for (i= 0; i < strlen(sendbag); i++) {   
                                         if (sendbag[i] == '*') {         
-                                                printf("        ");      
+                                                star++;
+                                                printf("            ");      
+                                                if (star%2 == 0) {
+                                                    printf("\n");
+                                                }
                                         }                                
                                         if (sendbag[i] != '*') {         
                                                 printf("%c", sendbag[i]);
