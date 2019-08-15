@@ -59,7 +59,7 @@ int client_init()
         memset(&serv_addr, 0, sizeof(struct sockaddr_in));                        
         serv_addr.sin_family = AF_INET;                                           
         serv_addr.sin_port = htons(4510);                                         
-        inet_aton("192.168.3.96", &serv_addr.sin_addr);                           
+        inet_aton("192.168.1.132", &serv_addr.sin_addr);                           
         conn_fd = socket(AF_INET, SOCK_STREAM, 0);                                
         connect(conn_fd , (struct sockaddr *)&serv_addr, sizeof(struct sockaddr));
         print();                                                                  
@@ -89,13 +89,14 @@ int pack_out(Agreement *agreement, int conn_fd)
 
 void WASLOGIN(int fd, char *username)
 {
+        //void (*p)(int fd, char *username) = WASLOGIN;
         int op;
         int opa, pchat, goon = 1;
         int back, respond;
         waslogin *waslogin = (struct Waslogin *)malloc(sizeof(struct Waslogin));
         struct BAG *temp = (struct BAG *)malloc(sizeof(struct BAG));
         struct BAGa *conversation = (struct BAGa *)malloc(sizeof(struct BAGa));
-        printf("*set up(0)       query(1)       message box(2)\n"); 
+        printf("set up(0)       query(1)       message box(2)\n"); 
         scanf("%d",&op);
         switch(op) {
         case 0:
@@ -131,6 +132,7 @@ void WASLOGIN(int fd, char *username)
                         printf("private chat with him(0)        sign out(1)\n");
                         scanf("%d", &pchat);
                         send(fd, &pchat, sizeof(int), 0);
+                        sleep(1);
                         if (pchat == 0) {
                                 printf("goon enter 1,sign out enter 0\n");      
                                 while(goon == 1) {
@@ -140,8 +142,8 @@ void WASLOGIN(int fd, char *username)
                                         strcpy(conversation->messagefrom, username);
                                         send(fd, conversation, sizeof(struct BAGa), 0);
                                         scanf("%d", &goon);
-                                        send(fd, &goon, sizeof(int), 0);
-                                        printf("%d is ok\n",__LINE__);
+                                        //send(fd, &goon, sizeof(int), 0);
+                                        printf("client.c %d is ok\n",__LINE__);
                                 }
                         } else if (pchat == 1) {
                                 break;
@@ -239,8 +241,8 @@ int main()
                                 printf("\n");
                                 pthread_create(&pid, NULL, allbag, (void *)&conn_fd);
                                 WASLOGIN(conn_fd, agreement->username);
-                                printf("%d is ok\n",__LINE__);
-                                printf("%d is ok\n",__LINE__);
+                                printf("client.c %d is ok\n",__LINE__);
+                                printf("client.c %d is ok\n",__LINE__);
                         } else if (back == FAILED) {
                                 printf("login was failed!\n");
                         }

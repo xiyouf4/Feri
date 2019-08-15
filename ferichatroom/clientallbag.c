@@ -25,18 +25,18 @@ struct BAGa {
 
 void *allbag(void *fd)
 {
-        printf("%d is ok\n",__LINE__);
+        printf("clientallbag.c %d is ok\n",__LINE__);
         int conn_fd;
         conn_fd = *((int *)fd);
         struct BAG *temp, *pnew;
         struct BAGa *pack;
-        printf("%d is ok\n",__LINE__);
+        printf("clientallbag.c %d is ok\n",__LINE__);
         pack = (struct BAGa *)malloc(sizeof(struct BAGa));
         start = (struct BAG *)malloc(sizeof(struct BAG));
         pnew = (struct BAG *)malloc(sizeof(struct BAG));
         start->next = NULL;
         temp = start;
-        printf("%d is ok\n",__LINE__);
+        printf("clientallbag.c %d is ok\n",__LINE__);
         while(1) {
                 recv(conn_fd, pack, sizeof(struct BAG), 0);
                 printf("%d is ok\n",__LINE__);
@@ -46,8 +46,8 @@ void *allbag(void *fd)
                 strcpy(pnew->message, pack->message);                         
                 temp->next = pnew;                                        
                 temp = pnew;                                              
-                printf("**line is=%d       %d\n",__LINE__,pack->type);
-                printf("**line is=%d       %s\n",__LINE__,pack->application);      
+                printf("** clientallbag.c line is=%d       %d\n",__LINE__,pack->type);
+                printf("**clientallbag.c line is=%d       %s\n",__LINE__,pack->application);      
                 sleep(10);
         }
 }

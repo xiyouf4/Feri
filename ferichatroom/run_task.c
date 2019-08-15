@@ -145,14 +145,15 @@ char *findpassword(char *username, char *answer, MYSQL mysql)
         }                                
 }
 
-void WASLOGIN(int fd, MYSQL mysql)
+void WASLOGIN(int fd, MYSQL mysql, int epfd, struct epoll_event ev)
 {
         char a[300];
         char b[300];
-        int op, i, pchat, goon = 1;
+        int op, i, pchat;
         int back, respond = -1;
         struct Waslogin *waslogin = (struct Waslogin *)malloc(sizeof(struct Waslogin)); 
         struct BAGa *pack = (struct BAGa *)malloc(sizeof(struct BAGa));
+        struct BAGa *conversation = (struct BAGa *)malloc(sizeof(struct BAGa));
         printf("%dis ok\n",__LINE__);
         recv(fd, waslogin, sizeof(struct Waslogin), 0);
         printf("%dis ok\n",__LINE__);
@@ -190,13 +191,19 @@ void WASLOGIN(int fd, MYSQL mysql)
                 }
                 printf("%dis ok\n",__LINE__);
                 send(fd, waslogin, sizeof(struct Waslogin), 0);
+                if (waslogin->onlineyon == 0) {
+        epoll_ctl(epfd, EPOLL_CTL_DEL, fd, &ev);
+        close(fd);
+        return;
+                    //优雅退出。
+                }
                 printf("%dis ok\n",__LINE__);
                 recv(fd, &pchat, sizeof(int), 0);
                 if (pchat == 0) {
-                    do
+                    do//转发站
                     {
-                            recv(fd, pack, sizeof(struct BAGa), 0);
-                            send(mess[i].fd, pack, sizeof(struct BAGa), 0);
+                            recv(fd, conversation, sizeof(struct BAGa), 0);
+                            send(mess[i].fd, conversation, sizeof(struct BAGa), 0);
                             //recv(fd, &goon, sizeof(int), 0);
                     } while (1);
                 } else if (pchat == 1) {
@@ -243,7 +250,7 @@ int run_task(int fd, int epfd, struct epoll_event ev)
                         break;
                 case LOGIN:
                         login(agreement->username, agreement->password, mysql, fd);
-                        WASLOGIN(fd, mysql);
+                        WASLOGIN(fd, mysql,epfd,ev);
                         break;
                 case FINDPASSWORDBACK:
                         pass = findpassword(agreement->username, agreement->answer, mysql);
