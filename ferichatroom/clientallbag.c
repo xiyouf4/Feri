@@ -48,5 +48,6 @@ void *allbag(void *fd)
                 temp = pnew;                                              
                 printf("**line is=%d       %d\n",__LINE__,pack->type);
                 printf("**line is=%d       %s\n",__LINE__,pack->application);      
+                sleep(10);
         }
 }

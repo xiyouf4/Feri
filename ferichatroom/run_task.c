@@ -149,7 +149,7 @@ void WASLOGIN(int fd, MYSQL mysql)
 {
         char a[300];
         char b[300];
-        int op, i, pchat;
+        int op, i, pchat, goon = 1;
         int back, respond = -1;
         struct Waslogin *waslogin = (struct Waslogin *)malloc(sizeof(struct Waslogin)); 
         struct BAGa *pack = (struct BAGa *)malloc(sizeof(struct BAGa));
@@ -190,10 +190,15 @@ void WASLOGIN(int fd, MYSQL mysql)
                 }
                 printf("%dis ok\n",__LINE__);
                 send(fd, waslogin, sizeof(struct Waslogin), 0);
+                printf("%dis ok\n",__LINE__);
                 recv(fd, &pchat, sizeof(int), 0);
                 if (pchat == 0) {
-                        recv(fd, pack, sizeof(struct BAGa), 0);
-                        send(mess[i].fd, pack, sizeof(struct BAGa), 0);
+                    do
+                    {
+                            recv(fd, pack, sizeof(struct BAGa), 0);
+                            send(mess[i].fd, pack, sizeof(struct BAGa), 0);
+                            //recv(fd, &goon, sizeof(int), 0);
+                    } while (1);
                 } else if (pchat == 1) {
                         break;
                 }

@@ -3,6 +3,7 @@
 #include <stdio.h>                                                                                          
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <pthread.h>
 #include <sys/epoll.h>
 #include <sys/types.h>
@@ -132,14 +133,15 @@ void WASLOGIN(int fd, char *username)
                         send(fd, &pchat, sizeof(int), 0);
                         if (pchat == 0) {
                                 printf("goon enter 1,sign out enter 0\n");      
-                                while(goon) {
+                                while(goon == 1) {
                                         printf("conversation bar:   ");    
                                         scanf("%s", conversation->message);
                                         conversation->type = 1;
                                         strcpy(conversation->messagefrom, username);
                                         send(fd, conversation, sizeof(struct BAGa), 0);
+                                        scanf("%d", &goon);
+                                        send(fd, &goon, sizeof(int), 0);
                                         printf("%d is ok\n",__LINE__);
-                                        scanf("%d",&goon);
                                 }
                         } else if (pchat == 1) {
                                 break;
