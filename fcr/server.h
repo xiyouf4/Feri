@@ -10,13 +10,16 @@
 
 typedef struct user {
     int is_login;
+    int fd;
     char username[USERNAME_LEN];
 } user_t;
 
 typedef struct server {
     int stop;
     int l_fd;
+    int acc_fd;
     int ep_fd;
+    char username[USERNAME_LEN];
     user_t users[MAX_USER_COUNT];
 } server_t;
 

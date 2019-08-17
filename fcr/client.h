@@ -18,8 +18,7 @@ int client_start(client_t *client);
 void client_destroy(client_t *cient);
 
 response_status_t *user_register(client_t *client, const char *username, const char *password);
-
-int user_login(client_t *client);
+response_status_t *user_login(client_t *client, const char *username, const char *password);
 char *user_get_friend_list(client_t *client);
 int user_add_friend(client_t *client);
 int user_del_friend(client_t *client);

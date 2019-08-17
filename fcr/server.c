@@ -22,6 +22,7 @@ int server_init(server_t *server)
 {
     server->stop = 0;
     server->l_fd = 0;
+    server->acc_fd = 0;
     bzero(server->users, sizeof(server->users));
     server->ep_fd = epoll_create(5);
     if (server->ep_fd < 0) {
@@ -84,7 +85,7 @@ int write_to_fd(int fd, const char *buff, int len)
     return nwritten;
 }
 
-typedef proto_head_t *(*packet_process_ft)(proto_head_t *);
+typedef proto_head_t *(*packet_process_ft)(proto_head_t *);//?????????????????????????????????????????????????????
 
 proto_head_t *process_register(proto_head_t *req)
 {
@@ -101,29 +102,35 @@ proto_head_t *process_register(proto_head_t *req)
     return (proto_head_t *)create_response_status(0, "success");
 }
 
-proto_head_t *process_login(proto_head_t *req)
+proto_head_t *process_login(proto_head_t *req, server_t *server)
 {
-    request_register_t *request = (request_register_t *)req;                                             
+    request_login_t *request = (request_login_t *)req;                                             
     fprintf(stderr, "want login, username: %s, password: %s\n", request->username, request->password);    
-
-    return (proto_head_t *)create_response_status(0, "success");
-}
-
-proto_head_t *process_user_request(proto_head_t *req) {
-    static packet_process_ft process_funcs[] = {
-        process_register,
-        process_login,
-        // TODO
-        // other ...
-    };
-
-    int index = req->type - PROTO_TYPE_BASE;
-    if (index < 0 /*|| index >= sizeof(process_funcs) / sizeof(process_funcs[0])*/) {
-        log_error("type cannot process: %d", req->type);
-        return NULL;
+    if(1) {
+//核对成功
+//遍历表中找request->username对应的主键自增号码i
+        /*server->users[i]->is_login = 1;
+        server->users[i]->fd = server->acc_fd;
+        strcpy(server->users[i]->username, request->username);*/ 
+        return (proto_head_t *)create_response_status(0, "success");
+    } else if (2) {
+//核对失败
+        return (proto_head_t *)create_response_status(-1, "密码或账号不正确");
     }
 
-    return process_funcs[index](req);
+}
+
+proto_head_t *process_user_request(proto_head_t *req, server_t *server) {
+
+    switch(req->type) {
+    case 1000:
+        return process_register(req);
+        break;
+    case 1001:
+        return process_login(req, server);
+        break;
+    }
+        return NULL;
 }
 
 void close_user_fd(server_t *server, int user_fd)
@@ -147,12 +154,12 @@ static void process_user_send_data(int fd, server_t *server)
         return;
     }
     int want_read_len = req->length - sizeof(proto_head_t);
-    nread = read_from_fd(fd, buffer + sizeof(proto_head_t), want_read_len);
+    nread = read_from_fd(fd, buffer + sizeof(proto_head_t), want_read_len);//??????????????????????
     if (nread < 0) {
         close_user_fd(server, fd);
         return;
     }
-    proto_head_t *resp = process_user_request(req);
+    proto_head_t *resp = process_user_request(req, server);
 
     if (!resp) {
         log_warn("emmmm, check your code, close it");
@@ -202,6 +209,7 @@ int server_run(server_t *server)
                 if (fd == server->l_fd) {
                     accept_new_connection(server);    
                 } else {
+                    server->acc_fd = fd;
                     process_user_send_data(fd, server);
                 }
             } 

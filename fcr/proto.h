@@ -90,7 +90,7 @@ typedef struct response_message_t {
 } response_message_t __attribute__((aligned(1)));
 
 request_register_t *create_request_register(const char *username, const char *password);
-request_login_t *create_request_login();
+request_login_t *create_request_login(const char *username, const char *password);
 request_get_friend_list_t *create_request_get_friend_list();
 request_add_friend_t *create_request_add_friend();
 request_del_friend_t *create_request_del_friend();

@@ -19,10 +19,12 @@ request_register_t *create_request_register(const char *username, const char *pa
     return packet;
 }
 
-request_login_t *create_request_login()
+request_login_t *create_request_login(const char *username, const char *password)
 {
     request_login_t *packet = (request_login_t *)malloc(sizeof(request_login_t));
     init_packet_head(&packet->head, REQ_LOGIN, sizeof(request_login_t));
+    strncpy(packet->username, username, USERNAME_LEN);
+    strncpy(packet->password, password, PASSWORD_LEN);
     return packet;
 }
 
