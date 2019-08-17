@@ -35,17 +35,21 @@ request_get_friend_list_t *create_request_get_friend_list()
     return packet;
 }
 
-request_add_friend_t *create_request_add_friend()
+request_add_friend_t *create_request_add_friend(const char *username, const char *friendname)
 {
     request_add_friend_t *packet = (request_add_friend_t *)malloc(sizeof(request_add_friend_t));
     init_packet_head(&packet->head, REQ_ADD_FRIEND, sizeof(request_add_friend_t));
+    strncpy(packet->username, username, USERNAME_LEN);
+    strncpy(packet->friendname, friendname, USERNAME_LEN);
     return packet;
 }
 
-request_del_friend_t *create_request_del_friend()
+request_del_friend_t *create_request_del_friend(const char *username, const char *friendname)
 {
     request_del_friend_t *packet = (request_del_friend_t *)malloc(sizeof(request_del_friend_t));
     init_packet_head(&packet->head, REQ_DEL_FRIEND, sizeof(request_del_friend_t));
+    strncpy(packet->username, username, USERNAME_LEN);
+    strncpy(packet->friendname, friendname, USERNAME_LEN);
     return packet;
 }
 

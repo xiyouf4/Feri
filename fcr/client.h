@@ -4,8 +4,8 @@
 #include "proto.h"
 
 typedef struct client_t {
+    char username[USERNAME_LEN];
     int conn_fd;
-
 } client_t;
 
 client_t client;
@@ -20,8 +20,8 @@ void client_destroy(client_t *cient);
 response_status_t *user_register(client_t *client, const char *username, const char *password);
 response_status_t *user_login(client_t *client, const char *username, const char *password);
 char *user_get_friend_list(client_t *client);
-int user_add_friend(client_t *client);
-int user_del_friend(client_t *client);
+response_status_t *user_add_friend(client_t *client, const char *username, const char *friendname);
+response_status_t *user_del_friend(client_t *client, const char *username, const char *friendname);
 int user_send_message(client_t *client);
 
 #endif

@@ -109,15 +109,45 @@ proto_head_t *process_login(proto_head_t *req, server_t *server)
     if(1) {
 //核对成功
 //遍历表中找request->username对应的主键自增号码i
-        /*server->users[i]->is_login = 1;
-        server->users[i]->fd = server->acc_fd;
-        strcpy(server->users[i]->username, request->username);*/ 
+        //int i;
+        /*for(i = 0; i < MAX_USER_COUNT; i++) {
+            if (strcmp(server->users[i].username, request->username) == 0) {
+
+            }
+        }*/
+       /* server->users[i].is_login = 1;
+        server->users[i].fd = server->acc_fd;
+        strcpy(server->users[i].username, request->username);*/ 
         return (proto_head_t *)create_response_status(0, "success");
     } else if (2) {
 //核对失败
         return (proto_head_t *)create_response_status(-1, "密码或账号不正确");
     }
 
+}
+
+proto_head_t *process_add_friend(proto_head_t *req, server_t *server)
+{
+    request_add_friend_t *request = (request_add_friend_t *)req;                                             
+    fprintf(stderr, "want add %s to be friend\n", request->friendname);    
+    int i;
+    for (i = 0; i < MAX_USER_COUNT; i++) {
+        if (1/*strcmp(server->users[i].username, request->friendname) == 0*/) {
+//给消息盒子发消息,并且告诉客户端申请发送成功，请稍等；
+//如果对方同意，将requst->username,reauest->friendname添加进好友表
+        return (proto_head_t *)create_response_status(0, "好友申请发送成功");
+        }
+    }
+    return NULL;
+}
+
+proto_head_t *process_del_friend(proto_head_t *req)
+{
+    request_add_friend_t *request = (request_add_friend_t *)req;                                             
+    fprintf(stderr, "want delete this %s friend\n", request->friendname);    
+    //在好友表中找到这两位的好友关系，删除之
+    //fprintf(stderr, "!@#$%s\n",request->username);
+    return (proto_head_t *)create_response_status(0, "成功删除");
 }
 
 proto_head_t *process_user_request(proto_head_t *req, server_t *server) {
@@ -128,6 +158,12 @@ proto_head_t *process_user_request(proto_head_t *req, server_t *server) {
         break;
     case 1001:
         return process_login(req, server);
+        break;
+    case 1003:
+        return process_add_friend(req, server);
+        break;
+    case 1004:
+        return process_del_friend(req);
         break;
     }
         return NULL;
