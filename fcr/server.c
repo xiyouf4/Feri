@@ -11,6 +11,8 @@
 #include "socket.h"
 #include "proto.h"
 
+
+
 void signal_handle(int signal)
 {
     (void)signal;
@@ -136,6 +138,8 @@ proto_head_t *process_add_friend(proto_head_t *req, server_t *server)
 //给消息盒子发消息,并且告诉客户端申请发送成功，请稍等；
 //如果对方同意，将requst->username,reauest->friendname添加进好友表
         return (proto_head_t *)create_response_status(0, "好友申请发送成功");
+        } else {
+        return (proto_head_t *)create_response_status(1, "对方不在线");
         }
     }
     return NULL;

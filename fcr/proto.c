@@ -46,6 +46,19 @@ request_add_friend_t *create_request_add_friend(const char *username, const char
     return packet;
 }
 
+request_add_friend_back_t *create_request_add_back_friend(int anw, const char *username, const char *friendname)   
+{                                                                                               
+    request_add_friend_back_t *packet = (request_add_friend_back_t *)malloc(sizeof(request_add_friend_back_t));
+    init_packet_head(&packet->head, REQ_ADD_FRIEND, sizeof(request_add_friend_t));              
+    packet->answer = anw;
+    strncpy(packet->username, username, USERNAME_LEN);                                          
+    strncpy(packet->friendname, friendname, USERNAME_LEN);                                      
+    return packet;                                                                              
+}                                                                                               
+
+
+
+
 request_del_friend_t *create_request_del_friend(const char *username, const char *friendname)
 {
     request_del_friend_t *packet = (request_del_friend_t *)malloc(sizeof(request_del_friend_t));

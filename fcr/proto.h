@@ -53,6 +53,13 @@ typedef struct request_add_friend_t {
     char friendname[PASSWORD_LEN];
 } request_add_friend_t __attribute__((aligned(1)));
 
+typedef struct request_add_friend_back_t {              
+    proto_head_t head;                             
+    int answer;
+    char username[USERNAME_LEN];                   
+    char friendname[PASSWORD_LEN];                 
+} request_add_friend_back_t __attribute__((aligned(1)));
+
 typedef struct request_del_friend_t {
     proto_head_t head;
     char username[USERNAME_LEN];
@@ -103,6 +110,7 @@ request_register_t *create_request_register(const char *username, const char *pa
 request_login_t *create_request_login(const char *username, const char *password);
 request_get_friend_list_t *create_request_get_friend_list(const char *username);
 request_add_friend_t *create_request_add_friend(const char *username,const char *friendname);
+request_add_friend_back_t *create_request_add_back_friend(int anw, const char *username,const char *friendname);
 request_del_friend_t *create_request_del_friend(const char *username,const char *friendname);
 request_black_friend_t *create_request_black_friend(const char *username,const char *friendname);
 request_send_message_t *create_request_send_message(int len);

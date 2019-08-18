@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <pthread.h>
@@ -187,6 +188,12 @@ response_status_t *user_black_friend(client_t *client, const char *username, con
     return resp;                                                                          
 }
 
+response_status_t *user_pravsend_message(client_t *client, const char *username, const char *friendname)
+{
+
+    printf("$#@@!\n");
+        return NULL;
+}
 cli_status_t show_register_menu()
 {
     char username[USERNAME_LEN];
@@ -281,8 +288,88 @@ cli_statusa_t show_black_friend_menu(client_t client)
     free(resp);                       
                                       
     return INITA;                     
-
 }
+
+cli_statusa_t show_pravsend_message(client_t client)
+{
+    char friendname[USERNAME_LEN];                                                   
+    printf("\tfriendname:");                                                         
+    scanf("%s", friendname);                                                         
+    response_status_t *resp = user_pravsend_message(&client, client.username, friendname);
+    if (resp->status == 0) {          
+        printf("发送成功!");          
+        printf("%s\n", resp->message);
+    } else {                          
+        printf("发送失败");           
+        printf("%s\n", resp->message);
+    }                                 
+                                      
+    free(resp);                       
+//私聊没有写完
+    return INITA;                     
+}
+
+messbox_status_t messbox_init_menu()                   
+{                                               
+    printf("-----------------------------\n");  
+    printf("\t1. 好友申请\n");                      
+    printf("\t2. 加群申请\n");                      
+    printf("\t3. 好友消息\n");                      
+    printf("\t4. 群消息\n");                      
+    printf("\t5. 文件消息\n");                      
+    printf("\t6. 群通知\n");                      
+    printf("\t7. 退出\n");                      
+    printf("-----------------------------\n\n");
+    printf("请选择: ");                         
+    int choice = 0;                             
+    scanf("%d", &choice);                       
+    switch (choice) {                           
+        case 1:                                 
+            return FRIEND_APPLICATION;                       
+        case 2:                                 
+            return GROUP_APPLICATION;                    
+        case 3:
+            return PRAV;
+            break;
+        case 4:
+            return GROUP_;
+            break;
+        case 7:                                 
+            return EXITB;                        
+            break;
+        default:                                
+            printf("\n输入错误啊，兄弟\n\n");   
+            break;                              
+    }                                           
+                                                
+    return INITB;                                
+}                                               
+
+cli_statusa_t messbox_show_menu()                                    
+{                                                       
+    messbox_status_t statusb = INITB;                         
+    while (statusb != EXITB) {                            
+        switch (statusb) {                               
+            case INITB:                                  
+                statusb = messbox_init_menu();              
+                break;                                  
+            case FRIEND_APPLICATION:                              
+                //statusb = show_register_menu();          
+                break;                                  
+            case PRAV:                                 
+                //statusb = show_login_menu();             
+                break;                                  
+            case EXITB:                                  
+                break;                                  
+            default:                                    
+                log_error("status unknown: %d", statusb);
+                abort();                                
+        }                                               
+        clear_input_buffer();                           
+    }                                                   
+
+    return INITA;
+}                                                       
 
 cli_statusa_t show_login_menua()
 {
@@ -297,14 +384,15 @@ cli_statusa_t show_login_menua()
     printf("\t8. 创建群\n");
     printf("\t9. 解散群\n");
     printf("\t10. 申请加群\n");
-    printf("\t11. 申请退群\n");
+    printf("\t11. 退群\n");
     printf("\t12. 群列表\n");
     printf("\t13. 查看群成员\n");
     printf("\t14. 群聊天记录\n");
     printf("\t15. 设置群管理员\n");
     printf("\t16. 群踢人\n");
     printf("\t17. 消息盒子\n");
-    printf("\t18. 退出\n");
+    printf("\t18. 发文件\n");
+    printf("\t19. 退出\n");
     printf("-----------------------------\n");
     printf("\t请选择：");
     int op;
@@ -328,7 +416,10 @@ cli_statusa_t show_login_menua()
     case 7:
         return BLACK_friend;
         break;
-    case 18:
+    case 17:
+        return messbox_show_menu();
+        break;
+    case 19:
         return EXITA;
         break;
     default:                             
@@ -349,7 +440,7 @@ void login_show_menu(client_t client)
                 statusa = show_login_menua();              
                 break;                                  
             case PRAV_chat:                              
-                //statusa = show_register_menu();          
+                statusa = show_pravsend_message(client);          
                 break;                                  
             case ALL_chat:
                 break;
@@ -388,6 +479,7 @@ cli_status_t show_login_menu()
     if (resp->status == 0) {                                            
         printf("登录成功");                                            
         printf("%s\n", resp->message);                                  
+        //消息盒子开始运行
         login_show_menu(client);
     } else {                                                            
         printf("登录失败");                                             

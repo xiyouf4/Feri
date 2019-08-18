@@ -19,12 +19,16 @@ typedef enum cli_statusa {
     EXITA,
 } cli_statusa_t;          
 
-
-
-
-
-
-
+typedef enum messbox_status {
+    INITB = 1,            
+    FRIEND_APPLICATION,               
+    GROUP_APPLICATION,            
+    PRAV,
+    GROUP_,
+    FILEN,
+    MANAGER,
+    EXITB,                
+} messbox_status_t;          
 
 
 
