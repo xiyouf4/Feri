@@ -13,12 +13,15 @@ typedef enum proto_type_t {
     REQ_GET_FRIEND_LIST = 1002,
     REQ_ADD_FRIEND = 1003,
     REQ_DEL_FRIEND = 1004,
-    REQ_SEND_MESSAGE = 1005,
+    REQ_PRAVSEND_MESSAGE = 1005,
     REQ_BLACK_FRIEND = 1006,
+    REQ_GROUPSEND_MESSAGE = 1007,
+    REQ_PULL_FRI_APP = 1008,
 
     RESP_STATUS = 2001,
     RESP_FRIEND_LIST = 2002,
-    RESP_MESSAGE = 2003,
+    RESP_PRAVMESSAGE = 2003,
+    RESP_GROUPMESSAGE = 2004,
 } proto_type_t;
 
 #define USERNAME_LEN 32
@@ -72,19 +75,37 @@ typedef struct request_black_friend_t {
     char friendname[PASSWORD_LEN];                 
 } request_black_friend_t __attribute__((aligned(1)));
 
-typedef enum message_type_t {
+typedef struct request_pull_fri_app {
+    proto_head_t head;                             
+    int pull_type;
+    char username[USERNAME_LEN];                   
+    char friendname[PASSWORD_LEN];                 
+
+} request_pull_fri_app_t __attribute__((aligned(1)));
+
+/*typedef enum message_type_t {
     SINGLE = 0,
     GROUP = 1,
-} message_type_t;
+} message_type_t;*/
 
-typedef struct request_send_message_t {
+typedef struct request_pravsend_message_t {
     proto_head_t head;
-    message_type_t type;
+    char username[USERNAME_LEN];
     char target_name[USERNAME_LEN];
-    char messgae[0];
-} request_send_message_t __attribute__((aligned(1)));
+    char messgae[2048];
+} request_pravsend_message_t __attribute__((aligned(1)));
 
-// response
+typedef struct request_groupsend_message_t {              
+    proto_head_t head;                               
+    char username[USERNAME_LEN];                     
+    char target_name[USERNAME_LEN];                  
+    char messgae[0];                                 
+} request_groupsend_message_t __attribute__((aligned(1)));
+
+
+
+
+
 #define MSG_LEN 32
 typedef struct response_status_t {
     proto_head_t head;
@@ -98,25 +119,53 @@ typedef struct response_friens_list_t {
     char userlist[USERLIST_LEN];
 } response_friens_list_t __attribute__((aligned(1)));
 
-typedef struct response_message_t {
+typedef struct response_pravmessage_t {
     proto_head_t head;
-    message_type_t type;
+    char username[USERNAME_LEN];
     char target_name[USERNAME_LEN];
-    uint16_t message_Len;
-    char messgae[0];
-} response_message_t __attribute__((aligned(1)));
+    //uint16_t message_Len;
+    char message[2048];
+} response_pravmessage_t __attribute__((aligned(1)));
+
+typedef struct response_groupmessage_t {              
+    proto_head_t head;                           
+    char username[USERNAME_LEN];                 
+    char target_name[USERNAME_LEN];              
+    //uint16_t message_Len;                      
+    char message[2048];                          
+} response_groupmessage_t __attribute__((aligned(1)));
+
+
+
+
+
+
+
+
 
 request_register_t *create_request_register(const char *username, const char *password);
+
 request_login_t *create_request_login(const char *username, const char *password);
+
 request_get_friend_list_t *create_request_get_friend_list(const char *username);
+
 request_add_friend_t *create_request_add_friend(const char *username,const char *friendname);
+
 request_add_friend_back_t *create_request_add_back_friend(int anw, const char *username,const char *friendname);
+
 request_del_friend_t *create_request_del_friend(const char *username,const char *friendname);
+
 request_black_friend_t *create_request_black_friend(const char *username,const char *friendname);
-request_send_message_t *create_request_send_message(int len);
+
+request_pravsend_message_t *create_request_pravsend_message(const char *username, const char *target_name, const char *message);
+
+request_groupsend_message_t *create_request_groupsend_message(const char *username, const char *target_name, const char *message);
+
+request_pull_fri_app_t *create_request_pull_fri_app(int pull_type, const char *username, const char *friendname);
 
 response_status_t *create_response_status(int status, const char *msg);
 response_friens_list_t *create_response_friends_list(const char *userlist);
-response_message_t *create_response_message(int len);
+response_pravmessage_t *create_response_pravmessage(const char *username, const char *target_name, const char *message);
+response_groupmessage_t *create_response_groupmessage(const char *username, const char *target_name, const char *message);
 
 #endif

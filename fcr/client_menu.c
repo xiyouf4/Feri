@@ -188,11 +188,33 @@ response_status_t *user_black_friend(client_t *client, const char *username, con
     return resp;                                                                          
 }
 
-response_status_t *user_pravsend_message(client_t *client, const char *username, const char *friendname)
+response_status_t *user_pravsend_message(client_t *client, const char *username, const char *target_name, const char *message)
 {
+    request_pravsend_message_t *req = create_request_pravsend_message(username, target_name, message);      
+    uint32_t nwritten = FERI_block_write(client->conn_fd, (char *)req, req->head.length); 
+    if (nwritten != req->head.length) {                                                   
+        log_error("send to server failed, exit");                                         
+        abort();                                                                          
+    }                                                                                     
+    response_status_t *resp = (response_status_t *)malloc(sizeof(response_status_t));     
+    int nread = FERI_block_read(client->conn_fd, (char *)resp, sizeof(response_status_t));
+    if (nread != sizeof(response_status_t)) {                                             
+        log_error("recv from server failed, exit");                                       
+        abort();                                                                          
+    }                                                                                     
+    if (resp->head.type != RESP_STATUS) {                                                 
+        log_error("recv from server data type != RESP_STATUS, exit");                     
+        abort();                                                                          
+    }                                                                                     
+    if (resp->head.magic != FERI_PROTO_HEAD) {                                            
+        log_error("recv from server data error, exit");                                   
+        abort();                                                                          
+    }                                                                                     
+                                                                                          
+    free(req);                                                                            
+                                                                                          
+    return resp;                                                                          
 
-    printf("$#@@!\n");
-        return NULL;
 }
 cli_status_t show_register_menu()
 {
@@ -292,21 +314,31 @@ cli_statusa_t show_black_friend_menu(client_t client)
 
 cli_statusa_t show_pravsend_message(client_t client)
 {
-    char friendname[USERNAME_LEN];                                                   
-    printf("\tfriendname:");                                                         
-    scanf("%s", friendname);                                                         
-    response_status_t *resp = user_pravsend_message(&client, client.username, friendname);
+    char target_name[USERNAME_LEN];                                                   
+    char message[2048];
+    printf("\ttarget_name:");                                                         
+    scanf("%s", target_name);                                                         
+    printf("请输入聊天内容:");
+    scanf("%s", message);
+    response_status_t *resp = user_pravsend_message(&client, client.username, target_name, message);
     if (resp->status == 0) {          
-        printf("发送成功!");          
+        printf("发送成功,");          
         printf("%s\n", resp->message);
     } else {                          
-        printf("发送失败");           
+        printf("发送失败\n");           
         printf("%s\n", resp->message);
     }                                 
                                       
-    free(resp);                       
 //私聊没有写完
+    free(resp);
     return INITA;                     
+}
+
+messbox_status_t show_pull_fri_app_menu()
+{
+    create_request_pull_fri_app(ADD_friend, "null", "null");
+    
+    return INITB;
 }
 
 messbox_status_t messbox_init_menu()                   
@@ -354,7 +386,7 @@ cli_statusa_t messbox_show_menu()
                 statusb = messbox_init_menu();              
                 break;                                  
             case FRIEND_APPLICATION:                              
-                //statusb = show_register_menu();          
+                statusb = show_pull_fri_app_menu();          
                 break;                                  
             case PRAV:                                 
                 //statusb = show_login_menu();             

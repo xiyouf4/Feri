@@ -77,14 +77,37 @@ request_black_friend_t *create_request_black_friend(const char *username, const 
     return packet;                                                                              
 }                                                                                               
 
-request_send_message_t *create_request_send_message(int len)
+request_pravsend_message_t *create_request_pravsend_message(const char *username, const char *target_name, const char * message)
 {
-    int length = sizeof(request_send_message_t) + len;
-    request_send_message_t *packet = (request_send_message_t *)malloc(length);
-    init_packet_head(&packet->head, REQ_SEND_MESSAGE, length);
+    request_pravsend_message_t *packet = (request_pravsend_message_t *)malloc(sizeof(request_pravsend_message_t));
+    init_packet_head(&packet->head, REQ_PRAVSEND_MESSAGE, sizeof(request_pravsend_message_t));
+    strncpy(packet->username, username, USERNAME_LEN);                                          
+    strncpy(packet->target_name, target_name, USERNAME_LEN);                                          
+    strncpy(packet->messgae, message, USERNAME_LEN);                                          
     return packet;
 }
 
+request_groupsend_message_t *create_request_groupsend_message(const char *username, const char *target_name, const char * message)
+{                                                                                                                                    
+    request_groupsend_message_t *packet = (request_groupsend_message_t *)malloc(sizeof(request_groupsend_message_t));                                                       
+    init_packet_head(&packet->head, REQ_GROUPSEND_MESSAGE, sizeof(request_groupsend_message_t));                                                                   
+    strncpy(packet->username, username, USERNAME_LEN);      
+    strncpy(packet->target_name, target_name, USERNAME_LEN);
+    strncpy(packet->messgae, message, USERNAME_LEN);        
+    return packet;                                                                                                                   
+}                                                                                                                                    
+
+request_pull_fri_app_t *create_request_pull_fri_app(int pull_type, const char *username, const char *friendname)
+{
+    request_pull_fri_app_t *packet = (request_pull_fri_app_t *)malloc(sizeof(request_pull_fri_app_t));
+    init_packet_head(&packet->head, REQ_PULL_FRI_APP, sizeof(request_pull_fri_app_t));            
+    packet->pull_type = pull_type;
+    strncpy(packet->username, username, USERNAME_LEN);                                    
+    strncpy(packet->friendname, friendname, PASSWORD_LEN);                                    
+    return packet;                                                                        
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------
 response_status_t *create_response_status(int status, const char *msg)
 {
     response_status_t *packet = (response_status_t *)malloc(sizeof(response_status_t));
@@ -104,10 +127,12 @@ response_friens_list_t *create_response_friends_list(const char *userlist)
     return packet;
 }
 
-response_message_t *create_response_message(int len)
+response_pravmessage_t *create_response_pravmessage(const char *username, const char *target_name, const char * message)
 {
-    int length = sizeof(request_send_message_t) + len;
-    response_message_t *packet = (response_message_t *)malloc(length);
-    init_packet_head(&packet->head, RESP_MESSAGE, length);
+    response_pravmessage_t *packet = (response_pravmessage_t *)malloc(sizeof(response_pravmessage_t));
+    init_packet_head(&packet->head, RESP_PRAVMESSAGE, sizeof(response_pravmessage_t));
+    strncpy(packet->username, username, USERNAME_LEN);      
+    strncpy(packet->target_name, target_name, USERNAME_LEN);
+    strncpy(packet->message, message, USERNAME_LEN);        
     return packet;
 }

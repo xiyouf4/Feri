@@ -26,7 +26,7 @@ typedef enum messbox_status {
     PRAV,
     GROUP_,
     FILEN,
-    MANAGER,
+    GROUP_TELL,
     EXITB,                
 } messbox_status_t;          
 

@@ -11,8 +11,6 @@
 #include "socket.h"
 #include "proto.h"
 
-
-
 void signal_handle(int signal)
 {
     (void)signal;
@@ -95,12 +93,20 @@ proto_head_t *process_register(proto_head_t *req)
     fprintf(stderr, "want register, username: %s, password: %s\n", request->username, request->password);
     
     if (strcmp(request->username, "zhangxue") == 0) {
-        fprintf(stderr, "不让 zhangxue 注册\n");
+        fprintf(stderr, "不允许 zhangxue 注册\n");
         return (proto_head_t *)create_response_status(1, "user exist!");
     }//检查此用户名是否已经注册
     // TODO
     // do data operator...
 //如果此用户名没有被注册过，那么将其写入数据库并且返回注册成功
+    int i;
+    for (i = 0; i < MAX_USER_COUNT; i++) {
+        if(all_box[i].bit != 1) {
+            all_box[i].bit = 1;
+            strncpy(all_box[i].boxowner, request->username, USERNAME_LEN);
+            break;
+        } 
+    }
     return (proto_head_t *)create_response_status(0, "success");
 }
 
@@ -133,15 +139,28 @@ proto_head_t *process_add_friend(proto_head_t *req, server_t *server)
     request_add_friend_t *request = (request_add_friend_t *)req;                                             
     fprintf(stderr, "want add %s to be friend\n", request->friendname);    
     int i;
-    for (i = 0; i < MAX_USER_COUNT; i++) {
-        if (1/*strcmp(server->users[i].username, request->friendname) == 0*/) {
+   /*for (i = 0; i < MAX_USER_COUNT; i++) {
+        if (1strcmp(server->users[i].username, request->friendname) == 0) {
+            
 //给消息盒子发消息,并且告诉客户端申请发送成功，请稍等；
 //如果对方同意，将requst->username,reauest->friendname添加进好友表
         return (proto_head_t *)create_response_status(0, "好友申请发送成功");
         } else {
         return (proto_head_t *)create_response_status(1, "对方不在线");
         }
+    }*/
+    for (i = 0; i < MAX_USER_COUNT; i++)
+    {
+        if (strcmp(request->username, all_box[i].boxowner) == 0) {
+            all_box[i].contents[mess_nums_count].type = FRIEND_APP;
+            all_box[i].contents[mess_nums_count].doo = 0;
+            strncpy(all_box[i].contents[mess_nums_count].username, request->username, USERNAME_LEN);
+            strncpy(all_box[i].contents[mess_nums_count].friendname, request->friendname, USERNAME_LEN);
+        }
+        mess_nums_count++;
+        break;
     }
+    return (proto_head_t *)create_response_status(0, "好友申请发送成功");
     return NULL;
 }
 
@@ -171,6 +190,28 @@ proto_head_t *process_black_friend(proto_head_t *req)
     return (proto_head_t *)create_response_status(0, "拉黑成功");                              
 }                                                                                              
     
+proto_head_t *process_pravsend_message(proto_head_t *req)
+{
+    request_pravsend_message_t *request = (request_pravsend_message_t *)req;                              
+    fprintf(stderr, "%s want send pravite message to  %s \n",request->username, request->target_name);    
+    //将此条消息放入目标好友的消息盒子中
+    int i;
+    for (i = 0; i < MAX_USER_COUNT; i++)                                                               
+    {                                                                                                  
+        if (strcmp(request->target_name, all_box[i].boxowner) == 0) {                                     
+            all_box[i].contents[mess_nums_count].type = PRVA;                                     
+            all_box[i].contents[mess_nums_count].doo = 0;                                               
+            strncpy(all_box[i].contents[mess_nums_count].username, request->username, USERNAME_LEN);    
+            strncpy(all_box[i].contents[mess_nums_count].friendname, request->target_name, USERNAME_LEN);
+            strncpy(all_box[i].contents[mess_nums_count].message, request->messgae, 2048);
+        }                                                                                              
+        mess_nums_count++;
+        break;                                                                                         
+    }                                                                                              
+    return (proto_head_t *)create_response_status(0, "发送成功");                             
+
+}
+
 proto_head_t *process_user_request(proto_head_t *req, server_t *server) {
 
     switch(req->type) {
@@ -188,6 +229,9 @@ proto_head_t *process_user_request(proto_head_t *req, server_t *server) {
         break;
     case 1004:
         return process_del_friend(req);
+        break;
+    case 1005:
+        return process_pravsend_message(req);
         break;
     case 1006:
         return process_black_friend(req);
@@ -274,6 +318,7 @@ int server_run(server_t *server)
                 } else {
                     server->acc_fd = fd;
                     process_user_send_data(fd, server);
+                    printf("!@#$!!!!\n");
                 }
             } 
         }
