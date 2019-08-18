@@ -15,7 +15,8 @@ typedef enum cli_statusa {
     ADD_friend,            
     DEL_friend,                
     LIST_friend,
-    EXITA
+    BLACK_friend,
+    EXITA,
 } cli_statusa_t;          
 
 

@@ -1,5 +1,6 @@
 #include "proto.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -28,10 +29,11 @@ request_login_t *create_request_login(const char *username, const char *password
     return packet;
 }
 
-request_get_friend_list_t *create_request_get_friend_list()
+request_get_friend_list_t *create_request_get_friend_list(const char *username)
 {
     request_get_friend_list_t *packet = (request_get_friend_list_t *)malloc(sizeof(request_get_friend_list_t));
     init_packet_head(&packet->head, REQ_GET_FRIEND_LIST, sizeof(request_get_friend_list_t));
+    strncpy(packet->username, username, USERNAME_LEN);
     return packet;
 }
 
@@ -53,6 +55,15 @@ request_del_friend_t *create_request_del_friend(const char *username, const char
     return packet;
 }
 
+request_black_friend_t *create_request_black_friend(const char *username, const char *friendname)   
+{
+    request_black_friend_t *packet = (request_black_friend_t *)malloc(sizeof(request_black_friend_t));
+    init_packet_head(&packet->head, REQ_BLACK_FRIEND, sizeof(request_black_friend_t));              
+    strncpy(packet->username, username, USERNAME_LEN);                                          
+    strncpy(packet->friendname, friendname, USERNAME_LEN);                                      
+    return packet;                                                                              
+}                                                                                               
+
 request_send_message_t *create_request_send_message(int len)
 {
     int length = sizeof(request_send_message_t) + len;
@@ -71,10 +82,12 @@ response_status_t *create_response_status(int status, const char *msg)
     return packet;
 }
 
-response_friens_list_t *create_response_friends_list()
+response_friens_list_t *create_response_friends_list(const char *userlist)
 {
     response_friens_list_t *packet = (response_friens_list_t *)malloc(sizeof(response_friens_list_t));
-    init_packet_head(&packet->head, RESP_FRIEND_LIST, sizeof(response_status_t));
+    init_packet_head(&packet->head, RESP_FRIEND_LIST, sizeof(response_friens_list_t));
+    strncpy(packet->userlist, userlist, USERLIST_LEN);
+    //fprintf(stderr, "!@#$^&&*%s", packet->userlist);
     return packet;
 }
 

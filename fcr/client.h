@@ -19,7 +19,8 @@ void client_destroy(client_t *cient);
 
 response_status_t *user_register(client_t *client, const char *username, const char *password);
 response_status_t *user_login(client_t *client, const char *username, const char *password);
-char *user_get_friend_list(client_t *client);
+response_status_t *user_black_friend(client_t *client, const char *username, const char *friendname);
+response_friens_list_t *user_get_friend_list(client_t *client, const char *username);
 response_status_t *user_add_friend(client_t *client, const char *username, const char *friendname);
 response_status_t *user_del_friend(client_t *client, const char *username, const char *friendname);
 int user_send_message(client_t *client);

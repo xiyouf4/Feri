@@ -144,12 +144,29 @@ proto_head_t *process_add_friend(proto_head_t *req, server_t *server)
 proto_head_t *process_del_friend(proto_head_t *req)
 {
     request_add_friend_t *request = (request_add_friend_t *)req;                                             
-    fprintf(stderr, "want delete this %s friend\n", request->friendname);    
+    fprintf(stderr, "%s want delete this %s friend\n",request->username , request->friendname);    
     //在好友表中找到这两位的好友关系，删除之
-    //fprintf(stderr, "!@#$%s\n",request->username);
     return (proto_head_t *)create_response_status(0, "成功删除");
 }
 
+proto_head_t *process_get_friend_list(proto_head_t *req)
+{
+    //char userlist[USERLIST_LEN];
+    request_get_friend_list_t *request = (request_get_friend_list_t *)req;                                             
+    fprintf(stderr, "%s want obtain himself friend list\n",request->username);    
+    //在数据库的好友表中遍历与request->username有关系的用户，加到数组中，用*隔开
+    char userlist[]="nihda*bgfdsc*JHGFDS*UYTRE*hgfds*YTREWQ*";
+    return (proto_head_t *)create_response_friends_list(userlist);
+}
+
+proto_head_t *process_black_friend(proto_head_t *req)                                            
+{                                                                                              
+    request_add_friend_t *request = (request_add_friend_t *)req;                               
+    fprintf(stderr, "%s want black this %s friend\n",request->username , request->friendname);
+    //在好友表中找到这两位的好友关系，将black列变为1                                                   
+    return (proto_head_t *)create_response_status(0, "拉黑成功");                              
+}                                                                                              
+    
 proto_head_t *process_user_request(proto_head_t *req, server_t *server) {
 
     switch(req->type) {
@@ -159,11 +176,17 @@ proto_head_t *process_user_request(proto_head_t *req, server_t *server) {
     case 1001:
         return process_login(req, server);
         break;
+    case 1002:
+        return process_get_friend_list(req); 
+        break;
     case 1003:
         return process_add_friend(req, server);
         break;
     case 1004:
         return process_del_friend(req);
+        break;
+    case 1006:
+        return process_black_friend(req);
         break;
     }
         return NULL;

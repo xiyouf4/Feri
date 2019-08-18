@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <pthread.h>
@@ -129,6 +130,63 @@ response_status_t *user_del_friend(client_t *client, const char *username, const
     return resp;                                                                          
 }                                                                                         
 
+response_friens_list_t *user_get_friend_list(client_t *client, const char *username)
+{
+    request_get_friend_list_t  *req = create_request_get_friend_list(username);          
+    uint32_t nwritten = FERI_block_write(client->conn_fd, (char *)req, req->head.length); 
+    if (nwritten != req->head.length) {                                                   
+        log_error("send to server failed, exit");                                         
+        abort();                                                                          
+    }                                                                                     
+    response_friens_list_t *resp = (response_friens_list_t *)malloc(sizeof(response_friens_list_t));     
+    int nread = FERI_block_read(client->conn_fd, (char *)resp, sizeof(response_friens_list_t));
+    if (nread != sizeof(response_friens_list_t)) {                                             
+        log_error("recv from server failed, exit");                                       
+        abort();                                                                          
+    }                                                                                     
+    if (resp->head.type != RESP_FRIEND_LIST) {                                                 
+        log_error("recv from server data type != RESP_STATUS, exit");                     
+        abort();                                                                          
+    }                                                                                     
+    if (resp->head.magic != FERI_PROTO_HEAD) {                                            
+        log_error("recv from server data error, exit");                                   
+        abort();                                                                          
+    }                                                                                     
+                                                                                          
+    free(req);                                                                            
+                                                                                          
+    return resp;                                                                          
+
+}
+
+response_status_t *user_black_friend(client_t *client, const char *username, const char *friendname)
+{
+    request_black_friend_t *req = create_request_black_friend(username, friendname);          
+    uint32_t nwritten = FERI_block_write(client->conn_fd, (char *)req, req->head.length); 
+    if (nwritten != req->head.length) {                                                   
+        log_error("send to server failed, exit");                                         
+        abort();                                                                          
+    }                                                                                     
+    response_status_t *resp = (response_status_t *)malloc(sizeof(response_status_t));     
+    int nread = FERI_block_read(client->conn_fd, (char *)resp, sizeof(response_status_t));
+    if (nread != sizeof(response_status_t)) {                                             
+        log_error("recv from server failed, exit");                                       
+        abort();                                                                          
+    }                                                                                     
+    if (resp->head.type != RESP_STATUS) {                                                 
+        log_error("recv from server data type != RESP_STATUS, exit");                     
+        abort();                                                                          
+    }                                                                                     
+    if (resp->head.magic != FERI_PROTO_HEAD) {                                            
+        log_error("recv from server data error, exit");                                   
+        abort();                                                                          
+    }                                                                                     
+                                                                                          
+    free(req);                                                                            
+                                                                                          
+    return resp;                                                                          
+}
+
 cli_status_t show_register_menu()
 {
     char username[USERNAME_LEN];
@@ -189,6 +247,43 @@ cli_statusa_t show_del_friend_menu(client_t client)
     return INITA;                                                 
 }                                                                 
 
+cli_statusa_t show_list_friend_menu(client_t client)
+{
+    response_friens_list_t *resp= user_get_friend_list(&client, client.username);
+    size_t i;
+    for (i = 0; i < 100; i++) {
+        if (resp->userlist[i] == '*') {
+            printf("\n");
+        } else {
+            printf("%c", resp->userlist[i]);
+        }
+    }
+
+    free(resp);                                                   
+
+    return INITA;                                                 
+}
+
+cli_statusa_t show_black_friend_menu(client_t client)
+{
+    char friendname[USERNAME_LEN];                                                 
+    printf("\tfriendname:");                                                       
+    scanf("%s", friendname);                                                       
+    response_status_t *resp= user_black_friend(&client, client.username, friendname);
+    if (resp->status == 0) {          
+        printf("拉黑成功!");          
+        printf("%s\n", resp->message);
+    } else {                          
+        printf("拉黑失败");           
+        printf("%s\n", resp->message);
+    }                                 
+                                      
+    free(resp);                       
+                                      
+    return INITA;                     
+
+}
+
 cli_statusa_t show_login_menua()
 {
     printf("-----------------------------\n");
@@ -208,7 +303,8 @@ cli_statusa_t show_login_menua()
     printf("\t14. 群聊天记录\n");
     printf("\t15. 设置群管理员\n");
     printf("\t16. 群踢人\n");
-    printf("\t17. 退出\n");
+    printf("\t17. 消息盒子\n");
+    printf("\t18. 退出\n");
     printf("-----------------------------\n");
     printf("\t请选择：");
     int op;
@@ -229,7 +325,10 @@ cli_statusa_t show_login_menua()
     case 5:
         return LIST_friend;
         break;
-    case 17:
+    case 7:
+        return BLACK_friend;
+        break;
+    case 18:
         return EXITA;
         break;
     default:                             
@@ -260,6 +359,12 @@ void login_show_menu(client_t client)
             case DEL_friend:                
                 statusa = show_del_friend_menu(client);
                 break;                      
+            case LIST_friend:
+                statusa = show_list_friend_menu(client);
+                break;
+            case BLACK_friend:
+                statusa = show_black_friend_menu(client);
+                break;
             case EXITA:                                  
                 break;                                  
             default:                                    
@@ -273,13 +378,13 @@ void login_show_menu(client_t client)
 
 cli_status_t show_login_menu()                                       
 {                                                                       
-    char username[USERNAME_LEN];                                        
+    //char username[USERNAME_LEN];                                        
     char password[USERNAME_LEN];                                        
     printf("\tusername:");                                              
     scanf("%s", client.username);                                              
     printf("\n\tpassword:");                                            
     scanf("%s", password);                                              
-    response_status_t *resp= user_login(&client, username, password);
+    response_status_t *resp= user_login(&client, client.username, password);
     if (resp->status == 0) {                                            
         printf("登录成功");                                            
         printf("%s\n", resp->message);                                  
