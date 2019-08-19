@@ -21,18 +21,14 @@ typedef enum cli_statusa {
 
 typedef enum messbox_status {
     INITB = 1,            
-    FRIEND_APPLICATION,               
-    GROUP_APPLICATION,            
-    PRAV,
-    GROUP_,
-    FILEN,
-    GROUP_TELL,
+    FRIEND_APPLICATION = 2,               
+    GROUP_APPLICATION = 3,            
+    PRAV = 4,
+    GROUP_ = 5,
+    FILEN = 6,
+    GROUP_TELL = 7,
     EXITB,                
 } messbox_status_t;          
-
-
-
-
 
 
 void cli_show_menu();

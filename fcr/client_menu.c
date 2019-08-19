@@ -58,6 +58,7 @@ response_status_t *user_login(client_t *client, const char *username, const char
     }                                                                                     
     response_status_t *resp = (response_status_t *)malloc(sizeof(response_status_t));     
     int nread = FERI_block_read(client->conn_fd, (char *)resp, sizeof(response_status_t));
+    fprintf(stderr,"nread = %d, menu.c line is %d\n", nread, __LINE__);
     if (nread != sizeof(response_status_t)) {                                             
         log_error("recv from server failed, exit");                                       
         abort();                                                                          
@@ -315,7 +316,7 @@ cli_statusa_t show_black_friend_menu(client_t client)
 cli_statusa_t show_pravsend_message(client_t client)
 {
     char target_name[USERNAME_LEN];                                                   
-    char message[2048];
+    char message[MAX_MESSAGE_LEN];
     printf("\ttarget_name:");                                                         
     scanf("%s", target_name);                                                         
     printf("请输入聊天内容:");
@@ -334,12 +335,98 @@ cli_statusa_t show_pravsend_message(client_t client)
     return INITA;                     
 }
 
-messbox_status_t show_pull_fri_app_menu()
+messbox_status_t show_pull_fri_app_menu(client_t client)
 {
-    create_request_pull_fri_app(ADD_friend, "null", "null");
-    
+    request_pull_fri_app_t *req = create_request_pull_fri_app(FRIEND_APPLICATION, client.username, "null");      
+    uint32_t nwritten = FERI_block_write(client.conn_fd, (char *)req, req->head.length);    
+    if (nwritten != req->head.length) {                                                   
+        log_error("send to server failed, exit");                                         
+        abort();                                                                          
+    }                                                                                     
+    response_pull_fri_app_t *resp = (response_pull_fri_app_t *)malloc(sizeof(response_pull_fri_app_t));     
+    int nread = FERI_block_read(client.conn_fd, (char *)resp, sizeof(response_pull_fri_app_t));
+    if (nread != sizeof(response_pull_fri_app_t)) {                                             
+        log_error("recv from server failed, exit");                                       
+        abort();                                                                          
+    }                                                                                     
+    if (resp->head.type != RESP_PULL_FRI_APP) {                                                 
+        log_error("recv from server data type != RESP_STATUS, exit");                     
+        abort();                                                                          
+    }                                                                                     
+    if (resp->head.magic != FERI_PROTO_HEAD) {                                            
+        log_error("recv from server data error, exit");                                   
+        abort();                                                                          
+    }                                                                                     
+
+    if (strcmp(resp->username, "您没有好友申请信息") == 0) {
+        free(req);
+        free(resp);
+        return INITB;
+    }
+                                                                                          
+    printf("%s 想要添加您为好友\n", resp->username);
+    printf("\t 请选择：\n");
+    printf("\t1. 同意\n");
+    printf("\t2. 拒绝\n");
+    int op;
+    scanf("%d", &op);
+    if (op == 1) {
+        request_agree_add_each_t *req = create_request_agree_add_each(resp->username, resp->friendname);
+        uint32_t nwritten = FERI_block_write(client.conn_fd, (char *)req, req->head.length);
+        if (nwritten != req->head.length) {                                                 
+            log_error("send to server failed, exit");                                       
+            abort();                                                                        
+        }                                                                                   
+        printf("您和%s已成为好友\n", resp->username);
+    } else if (op ==2) {
+        free(req);
+        free(resp);
+        return INITB;
+    }
+
+    free(req);                                                                            
+    free(resp);
+                                                                                          
+    return INITB;                                                                          
+}
+
+messbox_status_t show_pull_fri_prav_menu(client_t client)
+{
+    request_pull_pravmess_t *req = create_request_pull_pravmess(client.username);      
+    uint32_t nwritten = FERI_block_write(client.conn_fd, (char *)req, req->head.length); 
+    if (nwritten != req->head.length) {                                                   
+        log_error("send to server failed, exit");                                         
+        abort();                                                                          
+    }                                                                                     
+    response_pravmessage_t *resp = (response_pravmessage_t *)malloc(sizeof(response_pravmessage_t));     
+    int nread = FERI_block_read(client.conn_fd, (char *)resp, sizeof(response_pravmessage_t));
+    if (nread != sizeof(response_pravmessage_t)) {                                             
+        log_error("recv from server failed, exit");                                       
+        abort();                                                                          
+    }                                                                                     
+    if (resp->head.type != RESP_PULL_PRAV_MESS) {                                                 
+        log_error("recv from server data type != RESP_STATUS, exit");                     
+        abort();                                                                          
+    }                                                                                     
+    if (resp->head.magic != FERI_PROTO_HEAD) {                                            
+        log_error("recv from server data error, exit");                                   
+        abort();                                                                          
+    }                                                                                     
+    if (strcmp(resp->username, "您没有好友申请信息") == 0) {
+        free(req);                                          
+        free(resp);                                         
+        return INITB;                                       
+    }                                                       
+
+    printf("%s ：", resp->username);
+    printf("%s", resp->message);
+
     return INITB;
 }
+
+
+
+
 
 messbox_status_t messbox_init_menu()                   
 {                                               
@@ -377,7 +464,7 @@ messbox_status_t messbox_init_menu()
     return INITB;                                
 }                                               
 
-cli_statusa_t messbox_show_menu()                                    
+cli_statusa_t messbox_show_menu(client_t client)                                    
 {                                                       
     messbox_status_t statusb = INITB;                         
     while (statusb != EXITB) {                            
@@ -386,10 +473,10 @@ cli_statusa_t messbox_show_menu()
                 statusb = messbox_init_menu();              
                 break;                                  
             case FRIEND_APPLICATION:                              
-                statusb = show_pull_fri_app_menu();          
+                statusb = show_pull_fri_app_menu(client);          
                 break;                                  
             case PRAV:                                 
-                //statusb = show_login_menu();             
+                statusb = show_pull_fri_prav_menu(client);          
                 break;                                  
             case EXITB:                                  
                 break;                                  
@@ -403,7 +490,7 @@ cli_statusa_t messbox_show_menu()
     return INITA;
 }                                                       
 
-cli_statusa_t show_login_menua()
+cli_statusa_t show_login_menua(client_t client)
 {
     printf("-----------------------------\n");
     printf("\t1. 私聊 \n");
@@ -449,7 +536,7 @@ cli_statusa_t show_login_menua()
         return BLACK_friend;
         break;
     case 17:
-        return messbox_show_menu();
+        return messbox_show_menu(client);
         break;
     case 19:
         return EXITA;
@@ -469,7 +556,7 @@ void login_show_menu(client_t client)
     while (statusa != EXITA) {                            
         switch (statusa) {                               
             case INITA:                                  
-                statusa = show_login_menua();              
+                statusa = show_login_menua(client);              
                 break;                                  
             case PRAV_chat:                              
                 statusa = show_pravsend_message(client);          

@@ -56,9 +56,6 @@ request_add_friend_back_t *create_request_add_back_friend(int anw, const char *u
     return packet;                                                                              
 }                                                                                               
 
-
-
-
 request_del_friend_t *create_request_del_friend(const char *username, const char *friendname)
 {
     request_del_friend_t *packet = (request_del_friend_t *)malloc(sizeof(request_del_friend_t));
@@ -107,6 +104,23 @@ request_pull_fri_app_t *create_request_pull_fri_app(int pull_type, const char *u
     return packet;                                                                        
 }
 
+request_agree_add_each_t *create_request_agree_add_each(const char *username, const char *friendname)
+{
+    request_agree_add_each_t *packet = (request_agree_add_each_t *)malloc(sizeof(request_agree_add_each_t));
+    init_packet_head(&packet->head, REQ_AGREE_ADD_EACH, sizeof(request_agree_add_each_t));                  
+    strncpy(packet->username, username, USERNAME_LEN);                                          
+    strncpy(packet->friendname, friendname, USERNAME_LEN);                                      
+    return packet;                                                                              
+}
+
+request_pull_pravmess_t *create_request_pull_pravmess(const char *username)
+{                                                                                         
+    request_pull_pravmess_t*packet = (request_pull_pravmess_t*)malloc(sizeof(request_pull_pravmess_t));
+    init_packet_head(&packet->head, REQ_PULL_PRAV_MESS, sizeof(request_pull_pravmess_t));            
+    strncpy(packet->username, username, USERNAME_LEN);                                    
+    return packet;                                                                        
+}                                                                                         
+
 //----------------------------------------------------------------------------------------------------------------------------------------------
 response_status_t *create_response_status(int status, const char *msg)
 {
@@ -123,7 +137,6 @@ response_friens_list_t *create_response_friends_list(const char *userlist)
     response_friens_list_t *packet = (response_friens_list_t *)malloc(sizeof(response_friens_list_t));
     init_packet_head(&packet->head, RESP_FRIEND_LIST, sizeof(response_friens_list_t));
     strncpy(packet->userlist, userlist, USERLIST_LEN);
-    //fprintf(stderr, "!@#$^&&*%s", packet->userlist);
     return packet;
 }
 
@@ -136,3 +149,24 @@ response_pravmessage_t *create_response_pravmessage(const char *username, const 
     strncpy(packet->message, message, USERNAME_LEN);        
     return packet;
 }
+
+response_pull_fri_app_t *create_response_pull_fri_app(int pull_type, const char *username, const char *friendname)
+{
+    response_pull_fri_app_t *packet = (response_pull_fri_app_t *)malloc(sizeof(response_pull_fri_app_t));
+    init_packet_head(&packet->head, RESP_PULL_FRI_APP, sizeof(response_pull_fri_app_t));                
+    packet->pull_type = pull_type;                                                                    
+    strncpy(packet->username, username, USERNAME_LEN);                                                
+    strncpy(packet->friendname, friendname, PASSWORD_LEN);                                            
+    return packet;                                                                                    
+}
+
+response_pravmessage_t *create_response_pull_prav(const char *username, const char *target_name, const char *message)
+{
+     response_pravmessage_t  *packet = (response_pravmessage_t *)malloc(sizeof(response_pravmessage_t));
+     init_packet_head(&packet->head, RESP_PULL_PRAV_MESS, sizeof(request_pravsend_message_t));                      
+     strncpy(packet->username, username, USERNAME_LEN);                                                            
+     strncpy(packet->target_name, target_name, USERNAME_LEN);                                                      
+     strncpy(packet->message, message, MAX_MESSAGE_LEN);                                                              
+     return packet;                                                                                                
+}
+

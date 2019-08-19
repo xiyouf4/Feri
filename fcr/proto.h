@@ -17,15 +17,20 @@ typedef enum proto_type_t {
     REQ_BLACK_FRIEND = 1006,
     REQ_GROUPSEND_MESSAGE = 1007,
     REQ_PULL_FRI_APP = 1008,
+    REQ_AGREE_ADD_EACH = 1009,
+    REQ_PULL_PRAV_MESS = 1010,
 
     RESP_STATUS = 2001,
     RESP_FRIEND_LIST = 2002,
     RESP_PRAVMESSAGE = 2003,
     RESP_GROUPMESSAGE = 2004,
+    RESP_PULL_FRI_APP = 2005,
+    RESP_PULL_PRAV_MESS = 2006,
 } proto_type_t;
 
 #define USERNAME_LEN 32
 #define PASSWORD_LEN 32
+#define MAX_MESSAGE_LEN 800
 
 typedef struct proto_head_t {
     uint32_t magic;
@@ -83,16 +88,12 @@ typedef struct request_pull_fri_app {
 
 } request_pull_fri_app_t __attribute__((aligned(1)));
 
-/*typedef enum message_type_t {
-    SINGLE = 0,
-    GROUP = 1,
-} message_type_t;*/
 
 typedef struct request_pravsend_message_t {
     proto_head_t head;
     char username[USERNAME_LEN];
     char target_name[USERNAME_LEN];
-    char messgae[2048];
+    char messgae[MAX_MESSAGE_LEN];
 } request_pravsend_message_t __attribute__((aligned(1)));
 
 typedef struct request_groupsend_message_t {              
@@ -102,8 +103,19 @@ typedef struct request_groupsend_message_t {
     char messgae[0];                                 
 } request_groupsend_message_t __attribute__((aligned(1)));
 
+typedef struct request_agree_add_each_t {              
+    proto_head_t head;                           
+    char username[USERNAME_LEN];                 
+    char friendname[PASSWORD_LEN];                 
+} request_agree_add_each_t __attribute__((aligned(1)));
+
+typedef struct request_pull_pravmess_t {
+    proto_head_t head;                           
+    char username[USERNAME_LEN];
+} request_pull_pravmess_t;
 
 
+//---------------------------------------------------------------------
 
 
 #define MSG_LEN 32
@@ -123,17 +135,22 @@ typedef struct response_pravmessage_t {
     proto_head_t head;
     char username[USERNAME_LEN];
     char target_name[USERNAME_LEN];
-    //uint16_t message_Len;
-    char message[2048];
+    char message[MAX_MESSAGE_LEN];
 } response_pravmessage_t __attribute__((aligned(1)));
 
 typedef struct response_groupmessage_t {              
     proto_head_t head;                           
     char username[USERNAME_LEN];                 
     char target_name[USERNAME_LEN];              
-    //uint16_t message_Len;                      
-    char message[2048];                          
+    char message[MAX_MESSAGE_LEN];                          
 } response_groupmessage_t __attribute__((aligned(1)));
+
+typedef struct response_pull_fri_app {                
+    proto_head_t head;                               
+    int pull_type;                                   
+    char username[USERNAME_LEN];                     
+    char friendname[PASSWORD_LEN];                   
+} response_pull_fri_app_t __attribute__((aligned(1)));
 
 
 
@@ -163,9 +180,22 @@ request_groupsend_message_t *create_request_groupsend_message(const char *userna
 
 request_pull_fri_app_t *create_request_pull_fri_app(int pull_type, const char *username, const char *friendname);
 
+request_agree_add_each_t *create_request_agree_add_each(const char *username, const char *friendname);
+
+request_pull_pravmess_t *create_request_pull_pravmess(const char *username);
+
+
+//--------------------------------------------------------------------------------------------------------------------------------------------------------
 response_status_t *create_response_status(int status, const char *msg);
+
 response_friens_list_t *create_response_friends_list(const char *userlist);
+
 response_pravmessage_t *create_response_pravmessage(const char *username, const char *target_name, const char *message);
+
 response_groupmessage_t *create_response_groupmessage(const char *username, const char *target_name, const char *message);
+
+response_pull_fri_app_t *create_response_pull_fri_app(int pull_type, const char *username, const char *friendname);
+
+response_pravmessage_t *create_response_pull_prav(const char *username, const char *target_name, const char *message);
 
 #endif
