@@ -7,7 +7,6 @@
 
 int main()
 {
-    //queue_t *queuee = (queue_t *)malloc(sizeof(queue_t));
 
     signal(SIGINT, signal_handle);
 

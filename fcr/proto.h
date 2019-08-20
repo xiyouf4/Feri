@@ -19,6 +19,9 @@ typedef enum proto_type_t {
     REQ_PULL_FRI_APP = 1008,
     REQ_AGREE_ADD_EACH = 1009,
     REQ_PULL_PRAV_MESS = 1010,
+    REQ_PULL_FRI_CHAT_HISTORY = 1011,
+    REQ_CREATE_GROUP = 1012,
+    REQ_ADD_GROUP = 1013,
 
     RESP_STATUS = 2001,
     RESP_FRIEND_LIST = 2002,
@@ -26,11 +29,13 @@ typedef enum proto_type_t {
     RESP_GROUPMESSAGE = 2004,
     RESP_PULL_FRI_APP = 2005,
     RESP_PULL_PRAV_MESS = 2006,
+    RESP_PULL_FRI_CHAT_HISTORY = 2007,
 } proto_type_t;
 
 #define USERNAME_LEN 32
 #define PASSWORD_LEN 32
 #define MAX_MESSAGE_LEN 800
+#define MAX_MESSAGE_LENA 1600
 
 typedef struct proto_head_t {
     uint32_t magic;
@@ -111,8 +116,41 @@ typedef struct request_agree_add_each_t {
 
 typedef struct request_pull_pravmess_t {
     proto_head_t head;                           
+    int pull_type;
     char username[USERNAME_LEN];
-} request_pull_pravmess_t;
+} request_pull_pravmess_t __attribute__((aligned(1)));
+
+typedef struct request_pull_fri_chat_history_t {
+    proto_head_t head;                  
+    int pull_type;                      
+    char username[USERNAME_LEN*2];        
+    char friendname[USERNAME_LEN*2];        
+} request_pull_fri_chat_history_t __attribute__((aligned(1)));              
+
+typedef struct request_create_group {
+    proto_head_t head;
+    char username[USERNAME_LEN];
+    char groupname[USERNAME_LEN];
+} request_create_group_t __attribute__((aligned(1)));
+
+typedef struct request_add_group {                
+    proto_head_t head;                               
+    char username[USERNAME_LEN];                     
+    char groupname[USERNAME_LEN];                    
+} request_add_group_t __attribute__((aligned(1)));
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 //---------------------------------------------------------------------
@@ -152,13 +190,19 @@ typedef struct response_pull_fri_app {
     char friendname[PASSWORD_LEN];                   
 } response_pull_fri_app_t __attribute__((aligned(1)));
 
+typedef struct response_pull_fri_chat_history {              
+    proto_head_t head;                               
+    char username[USERNAME_LEN];                     
+    char target_name[USERNAME_LEN];                  
+    char message[MAX_MESSAGE_LENA];                   
+} response_pull_fri_chat_history_t __attribute__((aligned(1)));
 
 
 
 
 
 
-
+//-----------------------------------------------------------------------------------------------------------------
 
 request_register_t *create_request_register(const char *username, const char *password);
 
@@ -182,7 +226,13 @@ request_pull_fri_app_t *create_request_pull_fri_app(int pull_type, const char *u
 
 request_agree_add_each_t *create_request_agree_add_each(const char *username, const char *friendname);
 
-request_pull_pravmess_t *create_request_pull_pravmess(const char *username);
+request_pull_pravmess_t *create_request_pull_pravmess(int pull_type, const char *username);
+
+request_pull_fri_chat_history_t *create_request_pull_fri_chat_history(int pull_type, const char *username, const char *friendname);
+
+request_create_group_t *create_request_create_group(const char * username, const char *groupname);
+
+request_add_group_t *create_request_add_group(const char * username, const char *groupname);
 
 
 //--------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -197,5 +247,7 @@ response_groupmessage_t *create_response_groupmessage(const char *username, cons
 response_pull_fri_app_t *create_response_pull_fri_app(int pull_type, const char *username, const char *friendname);
 
 response_pravmessage_t *create_response_pull_prav(const char *username, const char *target_name, const char *message);
+
+response_pull_fri_chat_history_t *create_response_pull_fri_chat_history(const char *username, const char *target_name, const char *message);
 
 #endif

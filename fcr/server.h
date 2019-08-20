@@ -10,6 +10,8 @@
 
 #define MAX_USER_COUNT 1000
 #define MAX_HISTORY_MESSAGE 1000
+#define MAX_GROUP_MEMBER 100
+#define MAX_GROUP_MESSNUM 300
 
 int mess_nums_count;
 
@@ -35,7 +37,6 @@ typedef struct box_content {
     char username[32];      
     char friendname[32];    
     char message[1000];     
-    //struct BOX *next;     
 } box_content_t;            
 
 typedef struct BOX {                            
@@ -49,14 +50,45 @@ typedef struct queue {
     box_t *tail;      
 } queue_t;            
 
+typedef  struct group_member {
+    int here;
+    char username[USERNAME_LEN];
+} group_member_t;
+
+typedef struct group_box_message {   
+    int flag;                        
+    char username[USERNAME_LEN];     
+    char group_mess[MAX_MESSAGE_LEN];
+    struct group_box_message *next;
+} group_box_message_t;               
+
+typedef struct queue_message {
+    group_box_message_t *a;   
+    group_box_message_t *z;   
+} queue_message_t;            
+
+typedef struct GROUP_BOX {
+    char groupowner[USERNAME_LEN];
+    char groupname[USERNAME_LEN];
+    queue_message_t *poin;
+    group_member_t member[MAX_GROUP_MEMBER];
+    group_box_message_t group_messnum[MAX_GROUP_MESSNUM];
+    struct GROUP_BOX *next;
+} group_box_t;
+
+typedef struct queue_group {
+    group_box_t *first;
+    group_box_t *last;
+} queue_group_t;
+
 typedef struct server {
     int stop;
     int l_fd;
     int acc_fd;
     int ep_fd;
+    queue_group_t *queue_g;
     queue_t *queuee;
     char username[USERNAME_LEN];
-    //user_t users[MAX_USER_COUNT];
 } server_t;
 
 user_t users[MAX_USER_COUNT];

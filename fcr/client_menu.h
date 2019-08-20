@@ -16,6 +16,9 @@ typedef enum cli_statusa {
     DEL_friend,                
     LIST_friend,
     BLACK_friend,
+    FRI_chat_history,
+    CREATE_group,
+    ADD_group,
     EXITA,
 } cli_statusa_t;          
 
@@ -27,6 +30,7 @@ typedef enum messbox_status {
     GROUP_ = 5,
     FILEN = 6,
     GROUP_TELL = 7,
+    FRI_CHAT_HISTORY = 8,
     EXITB,                
 } messbox_status_t;          
 

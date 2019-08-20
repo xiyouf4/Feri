@@ -113,15 +113,44 @@ request_agree_add_each_t *create_request_agree_add_each(const char *username, co
     return packet;                                                                              
 }
 
-request_pull_pravmess_t *create_request_pull_pravmess(const char *username)
+request_pull_pravmess_t *create_request_pull_pravmess(int pull_type, const char *username)
 {                                                                                         
-    request_pull_pravmess_t*packet = (request_pull_pravmess_t*)malloc(sizeof(request_pull_pravmess_t));
+    request_pull_pravmess_t *packet = (request_pull_pravmess_t *)malloc(sizeof(request_pull_pravmess_t));
     init_packet_head(&packet->head, REQ_PULL_PRAV_MESS, sizeof(request_pull_pravmess_t));            
+    packet->pull_type = pull_type;
     strncpy(packet->username, username, USERNAME_LEN);                                    
     return packet;                                                                        
 }                                                                                         
 
+request_pull_fri_chat_history_t *create_request_pull_fri_chat_history(int pull_type, const char *username, const char *friendname)
+{
+     request_pull_fri_chat_history_t *packet = (request_pull_fri_chat_history_t *)malloc(sizeof(request_pull_fri_chat_history_t));   
+     init_packet_head(&packet->head, REQ_PULL_FRI_CHAT_HISTORY, sizeof(request_pull_fri_chat_history_t));              
+     packet->pull_type = pull_type;                                                                     
+     strncpy(packet->username, username, USERNAME_LEN);                                                 
+     strncpy(packet->friendname, friendname, USERNAME_LEN);                                                 
+     return packet;                                                                                     
+}
+
+request_create_group_t *create_request_create_group(const char *username, const char *groupname)
+{
+    request_create_group_t *packet = (request_create_group_t *)malloc(sizeof(request_create_group_t));
+    init_packet_head(&packet->head, REQ_CREATE_GROUP, sizeof(request_create_group_t));
+    strncpy(packet->username, username, USERNAME_LEN);
+    strncpy(packet->groupname, groupname, USERNAME_LEN);
+    return packet;
+}
+
+request_add_group_t *create_request_add_group(const char *username, const char *groupname)      
+{                                                                                                     
+    request_add_group_t *packet = (request_add_group_t *)malloc(sizeof(request_add_group_t));
+    init_packet_head(&packet->head, REQ_ADD_GROUP, sizeof(request_add_group_t));                
+    strncpy(packet->username, username, USERNAME_LEN);                                                
+    strncpy(packet->groupname, groupname, USERNAME_LEN);                                              
+    return packet;                                                                                    
+}                                                                                                     
 //----------------------------------------------------------------------------------------------------------------------------------------------
+
 response_status_t *create_response_status(int status, const char *msg)
 {
     response_status_t *packet = (response_status_t *)malloc(sizeof(response_status_t));
@@ -170,3 +199,12 @@ response_pravmessage_t *create_response_pull_prav(const char *username, const ch
      return packet;                                                                                                
 }
 
+response_pull_fri_chat_history_t *create_response_pull_fri_chat_history(const char *username, const char *target_name, const char *message)
+{
+     response_pull_fri_chat_history_t  *packet = (response_pull_fri_chat_history_t *)malloc(sizeof(response_pull_fri_chat_history_t));
+     init_packet_head(&packet->head, RESP_PULL_FRI_CHAT_HISTORY, sizeof(response_pull_fri_chat_history_t));          
+     strncpy(packet->username, username, USERNAME_LEN);                                                 
+     strncpy(packet->target_name, target_name, USERNAME_LEN);                                           
+     strncpy(packet->message, message, MAX_MESSAGE_LENA);                                                
+     return packet;                                                                                     
+}
