@@ -360,6 +360,8 @@ proto_head_t *process_create_group(proto_head_t *req)
         for (i = 0; i < MAX_GROUP_MEMBER; i++) {
             group->member[i].here = 0;
         }
+        strncpy(group->member[0].username, request->username, USERNAME_LEN);
+        group->member[0].here = 1;
         int j;
         for (j = 0; j < MAX_GROUP_MESSNUM; j++) {
             group->group_messnum[j].flag = 0;
@@ -385,6 +387,26 @@ proto_head_t *process_add_group(proto_head_t *req)
     }
 
     return (proto_head_t *)create_response_status(0, "成功加入");
+}
+
+proto_head_t *process_back_group(proto_head_t *req)
+{
+    request_back_group_t *request = (request_back_group_t *)req;                           
+    fprintf(stderr, "%s want to back %s group", request->username, request->groupname);
+    group_box_t *tmp = server.queue_g->first;                                 
+    fprintf(stderr, "@@@@@@@@@%s", tmp->member[0].username);
+    fprintf(stderr, "@@@@@@@@@%s", tmp->member[1].username);
+    while (strncmp(tmp->groupname, request->groupname, USERNAME_LEN) != 0) {  
+        tmp = tmp->next;                                                      
+    }                                                                         
+    int i;                                                                    
+    for (i = 0; i < MAX_GROUP_MEMBER; i++) {                                  
+        if (strncmp(tmp->member[i].username, request->username, USERNAME_LEN) == 0) {
+            tmp->member[i].here = 0;
+            bzero(tmp->member[i].username, USERNAME_LEN);
+        }
+    }                                                                         
+    return (proto_head_t *)create_response_status(0, "成功退出");
 }
 
 proto_head_t *process_user_request(proto_head_t *req, server_t *server) {
@@ -429,6 +451,9 @@ proto_head_t *process_user_request(proto_head_t *req, server_t *server) {
     case 1013:                           
         return process_add_group(req);
         break;                           
+    case 1014:
+        return process_back_group(req);
+        break;
     }
         return NULL;
 }

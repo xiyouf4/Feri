@@ -19,6 +19,7 @@ typedef enum cli_statusa {
     FRI_chat_history,
     CREATE_group,
     ADD_group,
+    BACK_group,
     EXITA,
 } cli_statusa_t;          
 

@@ -149,6 +149,23 @@ request_add_group_t *create_request_add_group(const char *username, const char *
     strncpy(packet->groupname, groupname, USERNAME_LEN);                                              
     return packet;                                                                                    
 }                                                                                                     
+
+request_back_group_t *create_request_back_group(const char *username, const char *groupname)   
+{                                                                                            
+    request_back_group_t *packet = (request_back_group_t *)malloc(sizeof(request_back_group_t));
+    init_packet_head(&packet->head, REQ_BACK_GROUP, sizeof(request_back_group_t));             
+    strncpy(packet->username, username, USERNAME_LEN);                                       
+    strncpy(packet->groupname, groupname, USERNAME_LEN);                                     
+    return packet;                                                                           
+}                                                                                            
+
+
+
+
+
+
+
+
 //----------------------------------------------------------------------------------------------------------------------------------------------
 
 response_status_t *create_response_status(int status, const char *msg)

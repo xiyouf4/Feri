@@ -22,6 +22,7 @@ typedef enum proto_type_t {
     REQ_PULL_FRI_CHAT_HISTORY = 1011,
     REQ_CREATE_GROUP = 1012,
     REQ_ADD_GROUP = 1013,
+    REQ_BACK_GROUP = 1014,
 
     RESP_STATUS = 2001,
     RESP_FRIEND_LIST = 2002,
@@ -139,11 +140,11 @@ typedef struct request_add_group {
     char groupname[USERNAME_LEN];                    
 } request_add_group_t __attribute__((aligned(1)));
 
-
-
-
-
-
+typedef struct request_back_group {                
+    proto_head_t head;                            
+    char username[USERNAME_LEN];                  
+    char groupname[USERNAME_LEN];                 
+} request_back_group_t __attribute__((aligned(1)));
 
 
 
@@ -233,6 +234,8 @@ request_pull_fri_chat_history_t *create_request_pull_fri_chat_history(int pull_t
 request_create_group_t *create_request_create_group(const char * username, const char *groupname);
 
 request_add_group_t *create_request_add_group(const char * username, const char *groupname);
+
+request_back_group_t *create_request_back_group(const char * username, const char *groupname);
 
 
 //--------------------------------------------------------------------------------------------------------------------------------------------------------

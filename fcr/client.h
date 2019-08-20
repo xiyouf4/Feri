@@ -26,5 +26,6 @@ response_status_t *user_del_friend(client_t *client, const char *username, const
 response_status_t *user_pravsend_message(client_t *client, const char *username, const char *target_name, const char *message);
 response_status_t *user_create_group(client_t *client, const char *groupname);
 response_status_t *user_add_group(client_t *client, const char *groupname);
+response_status_t *user_back_group(client_t *client, const char *groupname);
 
 #endif
