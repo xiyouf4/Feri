@@ -84,12 +84,12 @@ request_pravsend_message_t *create_request_pravsend_message(const char *username
     return packet;
 }
 
-request_groupsend_message_t *create_request_groupsend_message(const char *username, const char *target_name, const char * message)
+request_groupsend_message_t *create_request_groupsend_message(const char *username, const char *groupname, const char * message)
 {                                                                                                                                    
     request_groupsend_message_t *packet = (request_groupsend_message_t *)malloc(sizeof(request_groupsend_message_t));                                                       
     init_packet_head(&packet->head, REQ_GROUPSEND_MESSAGE, sizeof(request_groupsend_message_t));                                                                   
     strncpy(packet->username, username, USERNAME_LEN);      
-    strncpy(packet->target_name, target_name, USERNAME_LEN);
+    strncpy(packet->target_name, groupname, USERNAME_LEN);
     strncpy(packet->messgae, message, USERNAME_LEN);        
     return packet;                                                                                                                   
 }                                                                                                                                    

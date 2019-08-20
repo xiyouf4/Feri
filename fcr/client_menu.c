@@ -299,6 +299,32 @@ response_status_t *user_back_group(client_t *client, const char *groupname)
     return resp;                                                                          
 }                                                                                         
 
+response_status_t *user_allchat_message(client_t *client, const char * username, const char *groupname, const char *group_mess)
+{
+    request_groupsend_message_t *req = create_request_groupsend_message(username, groupname, group_mess);
+    uint32_t nwritten = FERI_block_write(client->conn_fd, (char *)req, req->head.length);             
+    if (nwritten != req->head.length) {                                                               
+        log_error("send to server failed, exit");                                                     
+        abort();                                                                                      
+    }                                                                                                 
+    response_status_t *resp = (response_status_t *)malloc(sizeof(response_status_t));                 
+    int nread = FERI_block_read(client->conn_fd, (char *)resp, sizeof(response_status_t));            
+    if (nread != sizeof(response_status_t)) {                                                         
+        log_error("recv from server failed, exit");                                                   
+        abort();                                                                                      
+    }                                                                                                 
+    if (resp->head.type != RESP_STATUS) {                                                             
+        log_error("recv from server data type != RESP_STATUS, exit");                                 
+        abort();                                                                                      
+    }                                                                                                 
+    if (resp->head.magic != FERI_PROTO_HEAD) {                                                        
+        log_error("recv from server data error, exit");                                               
+        abort();                                                                                      
+    }                                                                                                 
+    free(req);                                                                                        
+    return resp;                                                                                      
+}
+
 cli_status_t show_register_menu()
 {
     char username[USERNAME_LEN];
@@ -447,6 +473,27 @@ cli_statusa_t show_pull_fri_chat_history_menu(client_t client)
     free(req);                                                                                        
     free(resp);
     return INITA;
+}
+
+
+cli_statusa_t show_allchat_menu(client_t client)
+{
+    char groupname[USERNAME_LEN];
+    char group_mess[MAX_MESSAGE_LEN];
+    printf("群名：");            
+    scanf("%s", groupname);      
+    printf("消息：");
+    scanf("%s", group_mess);
+    response_status_t *resp = user_allchat_message(&client, client.username, groupname, group_mess);
+    if (resp->status == 0) {          
+        printf("发送成功,");          
+        printf("%s\n", resp->message);
+    } else {                          
+        printf("发送失败\n");         
+        printf("%s\n", resp->message);
+    }                                 
+    free(resp);                       
+    return INITA;                     
 }
 
 messbox_status_t show_pull_fri_app_menu(client_t client)
@@ -735,6 +782,7 @@ void login_show_menu(client_t client)
                 statusa = show_pravsend_message(client);          
                 break;                                  
             case ALL_chat:
+                statusa = show_allchat_menu(client);          
                 break;
             case ADD_friend:                                 
                 statusa = show_add_friend_menu(client);             

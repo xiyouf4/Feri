@@ -394,8 +394,6 @@ proto_head_t *process_back_group(proto_head_t *req)
     request_back_group_t *request = (request_back_group_t *)req;                           
     fprintf(stderr, "%s want to back %s group", request->username, request->groupname);
     group_box_t *tmp = server.queue_g->first;                                 
-    fprintf(stderr, "@@@@@@@@@%s", tmp->member[0].username);
-    fprintf(stderr, "@@@@@@@@@%s", tmp->member[1].username);
     while (strncmp(tmp->groupname, request->groupname, USERNAME_LEN) != 0) {  
         tmp = tmp->next;                                                      
     }                                                                         
@@ -407,6 +405,20 @@ proto_head_t *process_back_group(proto_head_t *req)
         }
     }                                                                         
     return (proto_head_t *)create_response_status(0, "成功退出");
+}
+
+proto_head_t *process_groupsend_message(proto_head_t *req)
+{
+    request_groupsend_message_t *request = (request_groupsend_message_t *)req;                          
+    fprintf(stderr, "%s want send group message to  %s \n",request->username, request->target_name);
+
+
+
+
+
+
+
+    return (proto_head_t *)create_response_status(0, "消息发送成功");                             
 }
 
 proto_head_t *process_user_request(proto_head_t *req, server_t *server) {
@@ -432,6 +444,9 @@ proto_head_t *process_user_request(proto_head_t *req, server_t *server) {
         break;
     case 1006:
         return process_black_friend(req);
+        break;
+    case 1007:
+        return process_groupsend_message(req);
         break;
     case 1008:
         return process_pull_fri_app(req);
@@ -536,7 +551,6 @@ int server_run(server_t *server)
                 } else {
                     server->acc_fd = fd;
                     process_user_send_data(fd, server);
-                    //printf("!@#$!!!!\n");
                 }
             } 
         }

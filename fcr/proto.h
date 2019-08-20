@@ -221,7 +221,7 @@ request_black_friend_t *create_request_black_friend(const char *username,const c
 
 request_pravsend_message_t *create_request_pravsend_message(const char *username, const char *target_name, const char *message);
 
-request_groupsend_message_t *create_request_groupsend_message(const char *username, const char *target_name, const char *message);
+request_groupsend_message_t *create_request_groupsend_message(const char *username, const char *groupname, const char *message);
 
 request_pull_fri_app_t *create_request_pull_fri_app(int pull_type, const char *username, const char *friendname);
 
