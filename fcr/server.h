@@ -15,15 +15,6 @@
 
 int mess_nums_count;
 
-/*typedef enum box_mess_type {
-    FRIEND_APP = 1,
-    GROUP_APP,
-    PRVA,
-    GROUP_,
-    FILEN,
-    GROUP_TELL,
-} box_mess_type_t;*/
-
 typedef struct user {
     int is_login;
     int fd;
@@ -81,6 +72,16 @@ typedef struct queue_group {
     group_box_t *last;
 } queue_group_t;
 
+typedef struct file_content {
+    char file[MAX_MESSAGE_LEN];
+} file_content_t;
+
+typedef struct file {
+    char username[USERNAME_LEN];
+    char friendname[USERNAME_LEN];
+    file_content_t fileall[500];
+} file_t;
+
 typedef struct server {
     int stop;
     int l_fd;
@@ -88,6 +89,7 @@ typedef struct server {
     int ep_fd;
     queue_group_t *queue_g;
     queue_t *queuee;
+    queue_message_t *emm;
     char username[USERNAME_LEN];
 } server_t;
 

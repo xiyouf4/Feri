@@ -6,6 +6,8 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <pthread.h>
 
 #include "all.h"
@@ -591,6 +593,72 @@ messbox_status_t show_pull_fri_prav_menu(client_t client)
     return INITB;
 }
 
+void user_pull_group(client_t *client, const char *username, const char *groupname)
+{
+    request_pull_group_t *req = create_request_pull_group(GROUP_, username, groupname);
+    uint32_t nwritten = FERI_block_write(client->conn_fd, (char *)req, req->head.length);                
+    if (nwritten != req->head.length) {                                                                  
+        log_error("send to server failed, exit");                                                        
+        abort();                                                                                         
+    }                                                                                                    
+    //循环收，直到发过来的群名项目为，完了
+    response_groupmessage_t *resp = (response_groupmessage_t *)malloc(sizeof(response_groupmessage_t));                    
+    int nread = FERI_block_read(client->conn_fd, (char *)resp, sizeof(response_groupmessage_t));               
+    if (nread != sizeof(response_groupmessage_t)) {                                                            
+        log_error("recv from server failed, exit");                                                      
+        abort();                                                                                         
+    }                                                                                                    
+    if (resp->head.type != RESP_GROUPMESSAGE) {                                                                
+        log_error("recv from server data type != RESP_STATUS, exit");                                    
+        abort();                                                                                         
+    }                                                                                                    
+    if (resp->head.magic != FERI_PROTO_HEAD) {                                                           
+        log_error("recv from server data error, exit");                                                  
+        abort();                                                                                         
+    }                                                                                                    
+    printf("%s:\t", resp->username);   
+    printf("%s\n", resp->message);  
+    while (strcmp(resp->target_name, "完了") != 0) {
+        nread = FERI_block_read(client->conn_fd, (char *)resp, sizeof(response_groupmessage_t));
+        if (nread != sizeof(response_groupmessage_t)) {                                             
+            log_error("recv from server failed, exit");                                             
+            abort();                                                                                
+        }                                                                                           
+        if (resp->head.type != RESP_GROUPMESSAGE) {                                                 
+            log_error("recv from server data type != RESP_STATUS, exit");                           
+            abort();                                                                                
+        }                                                                                           
+        if (resp->head.magic != FERI_PROTO_HEAD) {                                                  
+            log_error("recv from server data error, exit");                                         
+            abort();                                                                                
+        }                                                                                           
+        printf("%s:\t", resp->username);                                                            
+        printf("%s\n", resp->message);                                                              
+   }
+    printf("是否参与聊天？\n");
+    printf("\t1. 是\n");
+    printf("\t2. 否\n");
+    int op;
+    scanf("%d", &op);
+    if (op == 1) {
+        show_allchat_menu(*client);
+        free(resp);
+        free(req);                                                                                           
+    } else {
+        free(resp);
+        free(req);                                                                                           
+    }
+}
+
+messbox_status_t show_pull_group_menu(client_t client)
+{
+    char groupname[USERNAME_LEN];
+    printf("群名：");            
+    scanf("%s", groupname);      
+    user_pull_group(&client, client.username, groupname);
+    return INITB;
+}
+
 cli_statusa_t create_group_menu(client_t client)
 {
     char groupname[USERNAME_LEN];
@@ -636,15 +704,37 @@ cli_statusa_t back_group_menu(client_t client)
     return INITA;                                                
 }                                                                
 
+cli_statusa_t send_file_menu(client_t client)
+{
+    char file[MAX_MESSAGE_LEN];
+    printf("小仙女聊天室即将为您发送默认文件\n");
+    char friendname[USERNAME_LEN];
+    printf("好友用户名：");
+    scanf("%s", friendname);
+        request_send_file_t *req = create_request_send_file(client.username, friendname);
+        uint32_t nwritten = FERI_block_write(client.conn_fd, (char *)req, req->head.length);
+        if (nwritten != req->head.length) {                                                  
+            log_error("send to server failed, exit");                                        
+            abort();                                                                         
+        }                                                                                    
+    int fd;
+    fd = open("~/sf4/Feri/fcr/send_file_text.txt", O_RDONLY);
+    while (read(fd, file, MAX_MESSAGE_LEN) != 0) {
+        write(client.conn_fd, file, MAX_MESSAGE_LEN);
+    }
+    printf("发送完成啦\n");
+    return INITA;
+}
+
 messbox_status_t messbox_init_menu()                   
 {                                               
     printf("-----------------------------\n");  
     printf("\t1. 好友申请\n");                      
-    printf("\t2. 加群申请\n");                      
+    //printf("\t2. 加群申请\n");                      
     printf("\t3. 好友消息\n");                      
     printf("\t4. 群消息\n");                      
     printf("\t5. 文件消息\n");                      
-    printf("\t6. 群通知\n");                      
+    //printf("\t6. 群通知\n");                      
     printf("\t7. 退出\n");                      
     printf("-----------------------------\n\n");
     printf("请选择: ");                         
@@ -653,8 +743,7 @@ messbox_status_t messbox_init_menu()
     switch (choice) {                           
         case 1:                                 
             return FRIEND_APPLICATION;                       
-        case 2:                                 
-            return GROUP_APPLICATION;                    
+            break;
         case 3:
             return PRAV;
             break;
@@ -668,7 +757,6 @@ messbox_status_t messbox_init_menu()
             printf("\n输入错误啊，兄弟\n\n");   
             break;                              
     }                                           
-                                                
     return INITB;                                
 }                                               
 
@@ -686,6 +774,9 @@ cli_statusa_t messbox_show_menu(client_t client)
             case PRAV:                                 
                 statusb = show_pull_fri_prav_menu(client);          
                 break;                                  
+            case GROUP_:
+                statusb = show_pull_group_menu(client);          
+                break;
             case EXITB:                                  
                 break;                                  
             default:                                    
@@ -758,6 +849,9 @@ cli_statusa_t show_login_menua(client_t client)
     case 17:
         return messbox_show_menu(client);
         break;
+    case 18:
+        return FILEE;
+        break;
     case 19:
         return EXITA;
         break;
@@ -808,6 +902,9 @@ void login_show_menu(client_t client)
             case BACK_group:
                 statusa = back_group_menu(client);
                 break;
+            case FILEE:
+                statusa = send_file_menu(client);
+                break;
             case EXITA:                                  
                 break;                                  
             default:                                    
@@ -833,6 +930,7 @@ cli_status_t show_login_menu()
         printf("%s\n", resp->message);                                  
         //消息盒子开始运行
         login_show_menu(client);
+        return INIT;
     } else {                                                            
         printf("登录失败");                                             
         printf("%s\n", resp->message);                                  

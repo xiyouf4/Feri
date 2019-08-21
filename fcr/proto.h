@@ -23,6 +23,8 @@ typedef enum proto_type_t {
     REQ_CREATE_GROUP = 1012,
     REQ_ADD_GROUP = 1013,
     REQ_BACK_GROUP = 1014,
+    REQ_PULL_GROUP = 1015,
+    REQ_SEND_FEIL = 1016,
 
     RESP_STATUS = 2001,
     RESP_FRIEND_LIST = 2002,
@@ -31,6 +33,7 @@ typedef enum proto_type_t {
     RESP_PULL_FRI_APP = 2005,
     RESP_PULL_PRAV_MESS = 2006,
     RESP_PULL_FRI_CHAT_HISTORY = 2007,
+    RESP_SEND_FEIL = 2008,
 } proto_type_t;
 
 #define USERNAME_LEN 32
@@ -106,7 +109,7 @@ typedef struct request_groupsend_message_t {
     proto_head_t head;                               
     char username[USERNAME_LEN];                     
     char target_name[USERNAME_LEN];                  
-    char messgae[0];                                 
+    char messgae[MAX_MESSAGE_LEN];                                 
 } request_groupsend_message_t __attribute__((aligned(1)));
 
 typedef struct request_agree_add_each_t {              
@@ -146,8 +149,19 @@ typedef struct request_back_group {
     char groupname[USERNAME_LEN];                 
 } request_back_group_t __attribute__((aligned(1)));
 
+typedef struct request_pull_group_t {              
+    proto_head_t head;                                
+    int pull_type;                                    
+    char username[USERNAME_LEN];                      
+    char groupname[USERNAME_LEN];
+} request_pull_group_t __attribute__((aligned(1)));
 
-
+typedef struct request_send_file_t {              
+    proto_head_t head;                             
+    char username[USERNAME_LEN];                   
+    char friendname[USERNAME_LEN];                  
+    char file[MAX_MESSAGE_LEN];
+} request_send_file_t __attribute__((aligned(1)));
 
 
 
@@ -195,7 +209,7 @@ typedef struct response_pull_fri_chat_history {
     proto_head_t head;                               
     char username[USERNAME_LEN];                     
     char target_name[USERNAME_LEN];                  
-    char message[MAX_MESSAGE_LENA];                   
+    char message[MAX_MESSAGE_LEN];                          
 } response_pull_fri_chat_history_t __attribute__((aligned(1)));
 
 
@@ -237,6 +251,9 @@ request_add_group_t *create_request_add_group(const char * username, const char 
 
 request_back_group_t *create_request_back_group(const char * username, const char *groupname);
 
+request_pull_group_t *create_request_pull_group(int pull_type, const char *username, const char *groupname);
+
+request_send_file_t *create_request_send_file(const char *username, const char *friendname);
 
 //--------------------------------------------------------------------------------------------------------------------------------------------------------
 response_status_t *create_response_status(int status, const char *msg);

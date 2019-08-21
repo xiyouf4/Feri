@@ -27,6 +27,9 @@ int server_init(server_t *server)
     server->queue_g = (queue_group_t *)malloc(sizeof(queue_group_t));
     server->queue_g->first = NULL;
     server->queue_g->last = NULL;
+    server->emm = (queue_message_t *)malloc(sizeof(queue_message_t));
+    server->emm->a = NULL;
+    server->emm->z = NULL;
     server->stop = 0;
     server->l_fd = 0;
     server->acc_fd = 0;
@@ -102,17 +105,6 @@ proto_head_t *process_register(proto_head_t *req)
         fprintf(stderr, "不允许 zxue 注册\n");
         return (proto_head_t *)create_response_status(1, "user exist!");
     }//检查此用户名是否已经注册
-    // TODO
-    // do data operator...
-//如果此用户名没有被注册过，那么将其写入数据库并且返回注册成功
-   /* int i;
-    for (i = 0; i < MAX_USER_COUNT; i++) {
-        if(all_box[i].bit != 1) {
-            all_box[i].bit = 1;
-            strncpy(all_box[i].boxowner, request->username, USERNAME_LEN);
-            break;
-        } 
-    }*/
     return (proto_head_t *)create_response_status(0, "success");
 }
 
@@ -121,13 +113,6 @@ proto_head_t *process_login(proto_head_t *req, server_t *server)
     request_login_t *request = (request_login_t *)req;                                             
     fprintf(stderr, "want login, username: %s, password: %s\n", request->username, request->password);    
     if(1) {
-//1,根据用户名和密码在数据库中核对，如果核对成功
-//遍历表中找request->username对应的主键自增号码num
-        /*for(i = 0; i < MAX_USER_COUNT; i++) {
-            if (strcmp(server->users[i].username, request->username) == 0) {
-
-            }
-        }*/
         int num = 1;
         users[num].is_login = 1;//在在线链表中将好友变为上线状态
         users[num].fd = server->acc_fd;
@@ -258,8 +243,8 @@ proto_head_t *process_pull_fri_app(proto_head_t *req)
     for (i = 0; i < MAX_HISTORY_MESSAGE; i++) {
         if (tmp->contents[i].type == FRIEND_APPLICATION && tmp->contents[i].doo == 0) {
             tmp->contents[i].doo = 1;
+            break;
         }
-        break;
     }
     return (proto_head_t *)create_response_pull_fri_app(FRIEND_APPLICATION, tmp->contents[i].username, tmp->contents[i].friendname);//                             
     if (i == MAX_HISTORY_MESSAGE) {
@@ -289,9 +274,9 @@ proto_head_t *process_pull_pravmess(proto_head_t *req)
     for (i = 0; i < MAX_HISTORY_MESSAGE; i++) {                                                                                       
         if (tmp->contents[i].type == PRAV && tmp->contents[i].doo == 0) {                                                 
             tmp->contents[i].doo = 1;                                                                                                 
+            return (proto_head_t *)create_response_pull_prav(tmp->contents[i].username, tmp->contents[i].friendname, tmp->contents[i].message);
+            break;                                                                                                                             
         }                                                                                                                             
-        return (proto_head_t *)create_response_pull_prav(tmp->contents[i].username, tmp->contents[i].friendname, tmp->contents[i].message);//
-        break;                                                                                                                        
     }                                                                                                                                 
     if (i == MAX_HISTORY_MESSAGE) {                                                                                                   
         return (proto_head_t *)create_response_pull_prav( "null", "null", "暂时没有好友私聊您");//                      
@@ -316,8 +301,8 @@ proto_head_t *process_pull_fri_chat_history(proto_head_t *req)
             strcat(resp->message, ":\t");
             strcat(resp->message, tmpa->contents[j].message);//                                             
             strcat(resp->message, "\n");
+            break;                                                                                             
         }                                                                                                  
-        break;                                                                                             
     }                                                                                                      
     box_t *tmp = server.queuee->head;                                    
     while (strcmp(tmp->boxowner, request->username) != 0) {              
@@ -329,8 +314,8 @@ proto_head_t *process_pull_fri_chat_history(proto_head_t *req)
             strcat(resp->message, request->friendname);
             strcat(resp->message, ":\t");
             strcat(resp->message, tmp->contents[i].message);//
+            break;                                                           
         }                                                                
-        break;                                                           
     }                                                                    
                                            
     return (proto_head_t *)create_response_pull_fri_chat_history(request->username, request->friendname, resp->message);//
@@ -410,16 +395,56 @@ proto_head_t *process_back_group(proto_head_t *req)
 proto_head_t *process_groupsend_message(proto_head_t *req)
 {
     request_groupsend_message_t *request = (request_groupsend_message_t *)req;                          
-    fprintf(stderr, "%s want send group message to  %s \n",request->username, request->target_name);
-
-
-
-
-
-
-
+    fprintf(stderr, "%s want send group message to %s, message is %s \n",request->username, request->target_name, request->messgae);
+    group_box_t *tmp = server.queue_g->first;                                        
+    while (strncmp(tmp->groupname, request->target_name, USERNAME_LEN) != 0) {         
+        tmp = tmp->next;                                                             
+    }                                                                                
+    int i;                                                                           
+    for (i = 0; i < MAX_GROUP_MESSNUM; i++) {
+        tmp->group_messnum[i].flag = 0;
+    }
+    group_box_message_t *hist = (group_box_message_t *)malloc(sizeof(group_box_message_t));
+    hist->next = NULL;//////////////////////////////////////////////////
+    strncpy(hist->username, request->username, USERNAME_LEN);
+    strncpy(hist->group_mess, request->messgae, MAX_MESSAGE_LEN);
+    hist->flag = 1;
+    if (server.emm->z != NULL) {
+        server.emm->z->next = hist;
+        server.emm->z = hist;
+    } else {
+        server.emm->a = server.emm->z = hist;
+    }
+    //fprintf(stderr, ",,,,,,,,,,,,,,,,,,,,%s", server.emm->z->group_mess);
     return (proto_head_t *)create_response_status(0, "消息发送成功");                             
 }
+
+proto_head_t *process_pull_groupmess(proto_head_t *req)
+{
+    request_pull_group_t *request = (request_pull_group_t *)req;                                                     
+    fprintf(stderr, "%s want pull %s group message\n",request->username, request->groupname);
+    group_box_t *tmp = server.queue_g->first;                                 
+    while (strncmp(tmp->groupname, request->groupname, USERNAME_LEN) != 0) {
+        tmp = tmp->next;                                                      
+    }       //找到了目标盒子，目标群
+    group_box_message_t *temp = server.emm->a;
+    do {
+        //循环发送消息记录，直到temp->next=NULL,将temp本身返回给case的return；
+        proto_head_t *resp = (proto_head_t *)create_response_groupmessage(temp->username, request->groupname, temp->group_mess);
+        write_to_fd(server.acc_fd, (char *)resp, resp->length);
+        temp = temp->next;
+
+    } while (temp->next != NULL); 
+
+    return (proto_head_t *)create_response_groupmessage(temp->username, "完了", temp->group_mess);                             
+}
+
+/*proto_head_t *process_file(proto_head_t *req)
+{
+
+
+
+}*/
 
 proto_head_t *process_user_request(proto_head_t *req, server_t *server) {
 
@@ -468,6 +493,12 @@ proto_head_t *process_user_request(proto_head_t *req, server_t *server) {
         break;                           
     case 1014:
         return process_back_group(req);
+        break;
+    case 1015:
+        return process_pull_groupmess(req);
+        break;
+    case 1016:
+//        return process_file(req);
         break;
     }
         return NULL;

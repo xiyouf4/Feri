@@ -90,7 +90,7 @@ request_groupsend_message_t *create_request_groupsend_message(const char *userna
     init_packet_head(&packet->head, REQ_GROUPSEND_MESSAGE, sizeof(request_groupsend_message_t));                                                                   
     strncpy(packet->username, username, USERNAME_LEN);      
     strncpy(packet->target_name, groupname, USERNAME_LEN);
-    strncpy(packet->messgae, message, USERNAME_LEN);        
+    strncpy(packet->messgae, message, MAX_MESSAGE_LEN);        
     return packet;                                                                                                                   
 }                                                                                                                                    
 
@@ -159,6 +159,33 @@ request_back_group_t *create_request_back_group(const char *username, const char
     return packet;                                                                           
 }                                                                                            
 
+request_pull_group_t *create_request_pull_group(int pull_type, const char *username, const char *groupname)
+{
+    request_pull_group_t *packet = (request_pull_group_t *)malloc(sizeof(request_pull_group_t));
+    init_packet_head(&packet->head, REQ_PULL_GROUP, sizeof(request_pull_group_t));                
+    packet->pull_type = pull_type;                                                                       
+    strncpy(packet->username, username, USERNAME_LEN);                                                   
+    strncpy(packet->groupname, groupname, USERNAME_LEN);                                                   
+    return packet;                                                                                       
+}
+
+request_send_file_t *create_request_send_file(const char *username, const char *friendname)
+{
+     request_send_file_t *packet = (request_send_file_t *)malloc(sizeof(request_send_file_t));   
+     init_packet_head(&packet->head, REQ_SEND_FEIL, sizeof(request_send_file_t));                     
+     strncpy(packet->username, username, USERNAME_LEN);                                                               
+     strncpy(packet->friendname, friendname, USERNAME_LEN);                                                           
+     return packet;                                                                                                   
+
+}
+
+
+
+
+
+
+
+
 
 
 
@@ -222,6 +249,20 @@ response_pull_fri_chat_history_t *create_response_pull_fri_chat_history(const ch
      init_packet_head(&packet->head, RESP_PULL_FRI_CHAT_HISTORY, sizeof(response_pull_fri_chat_history_t));          
      strncpy(packet->username, username, USERNAME_LEN);                                                 
      strncpy(packet->target_name, target_name, USERNAME_LEN);                                           
-     strncpy(packet->message, message, MAX_MESSAGE_LENA);                                                
+     strncpy(packet->message,  message, MAX_MESSAGE_LENA);                                                
      return packet;                                                                                     
 }
+
+response_groupmessage_t *create_response_groupmessage(const char *username, const char *target_name, const char *message)
+{
+    response_groupmessage_t *packet = (response_groupmessage_t *)malloc(sizeof(response_groupmessage_t));
+    init_packet_head(&packet->head, RESP_GROUPMESSAGE, sizeof(response_groupmessage_t));                
+    strncpy(packet->username, username, USERNAME_LEN);                                                
+    strncpy(packet->target_name, target_name, USERNAME_LEN);                                          
+    strncpy(packet->message, message, USERNAME_LEN);                                                  
+    return packet;                                                                                    
+}
+
+
+
+

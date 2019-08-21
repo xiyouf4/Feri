@@ -20,6 +20,7 @@ typedef enum cli_statusa {
     CREATE_group,
     ADD_group,
     BACK_group,
+    FILEE,
     EXITA,
 } cli_statusa_t;          
 
