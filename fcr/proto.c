@@ -169,19 +169,33 @@ request_pull_group_t *create_request_pull_group(int pull_type, const char *usern
     return packet;                                                                                       
 }
 
-request_send_file_t *create_request_send_file(const char *username, const char *friendname)
+request_send_file_t *create_request_send_file(const char *username, const char *friendname, int num)
 {
      request_send_file_t *packet = (request_send_file_t *)malloc(sizeof(request_send_file_t));   
      init_packet_head(&packet->head, REQ_SEND_FEIL, sizeof(request_send_file_t));                     
      strncpy(packet->username, username, USERNAME_LEN);                                                               
      strncpy(packet->friendname, friendname, USERNAME_LEN);                                                           
+     packet->num = num;
      return packet;                                                                                                   
-
 }
 
+request_refresh_pravmess_t *create_request_refresh_pravmess(int pull_type, const char *username)
+{
+    request_refresh_pravmess_t *packet = (request_refresh_pravmess_t *)malloc(sizeof(request_refresh_pravmess_t));
+    init_packet_head(&packet->head, REQ_REFRESH_PRAVMESS, sizeof(request_refresh_pravmess_t));                
+    packet->pull_type = pull_type;                                                                       
+    strncpy(packet->username, username, USERNAME_LEN);                                                   
+    return packet;                                                                                       
+}
 
-
-
+request_refresh_pravmess_t *create_request_prav_refresh(int pull_type, const char *username)
+{
+    request_refresh_pravmess_t *packet = (request_refresh_pravmess_t *)malloc(sizeof(request_refresh_pravmess_t));
+    init_packet_head(&packet->head, REQ_PRAV_REFRESH, sizeof(request_refresh_pravmess_t));                    
+    packet->pull_type = pull_type;                                                                                
+    strncpy(packet->username, username, USERNAME_LEN);                                                            
+    return packet;                                                                                                
+}
 
 
 

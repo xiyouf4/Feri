@@ -25,6 +25,8 @@ typedef enum proto_type_t {
     REQ_BACK_GROUP = 1014,
     REQ_PULL_GROUP = 1015,
     REQ_SEND_FEIL = 1016,
+    REQ_REFRESH_PRAVMESS = 1017,
+    REQ_PRAV_REFRESH = 1018,
 
     RESP_STATUS = 2001,
     RESP_FRIEND_LIST = 2002,
@@ -124,6 +126,12 @@ typedef struct request_pull_pravmess_t {
     char username[USERNAME_LEN];
 } request_pull_pravmess_t __attribute__((aligned(1)));
 
+typedef struct request_refresh_pravmess {              
+    proto_head_t head;                                
+    int pull_type;                                    
+    char username[USERNAME_LEN];                      
+} request_refresh_pravmess_t __attribute__((aligned(1)));
+
 typedef struct request_pull_fri_chat_history_t {
     proto_head_t head;                  
     int pull_type;                      
@@ -160,7 +168,7 @@ typedef struct request_send_file_t {
     proto_head_t head;                             
     char username[USERNAME_LEN];                   
     char friendname[USERNAME_LEN];                  
-    char file[MAX_MESSAGE_LEN];
+    int num;
 } request_send_file_t __attribute__((aligned(1)));
 
 
@@ -171,7 +179,7 @@ typedef struct request_send_file_t {
 //---------------------------------------------------------------------
 
 
-#define MSG_LEN 32
+#define MSG_LEN 300
 typedef struct response_status_t {
     proto_head_t head;
     int status;
@@ -243,6 +251,10 @@ request_agree_add_each_t *create_request_agree_add_each(const char *username, co
 
 request_pull_pravmess_t *create_request_pull_pravmess(int pull_type, const char *username);
 
+request_refresh_pravmess_t *create_request_refresh_pravmess(int pull_type, const char *username);
+
+request_refresh_pravmess_t *create_request_prav_refresh(int pull_type, const char *username);
+
 request_pull_fri_chat_history_t *create_request_pull_fri_chat_history(int pull_type, const char *username, const char *friendname);
 
 request_create_group_t *create_request_create_group(const char * username, const char *groupname);
@@ -253,7 +265,7 @@ request_back_group_t *create_request_back_group(const char * username, const cha
 
 request_pull_group_t *create_request_pull_group(int pull_type, const char *username, const char *groupname);
 
-request_send_file_t *create_request_send_file(const char *username, const char *friendname);
+request_send_file_t *create_request_send_file(const char *username, const char *friendname, int num);
 
 //--------------------------------------------------------------------------------------------------------------------------------------------------------
 response_status_t *create_response_status(int status, const char *msg);

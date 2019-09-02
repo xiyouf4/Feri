@@ -211,7 +211,7 @@ proto_head_t *process_pravsend_message(proto_head_t *req)
 {
     request_pravsend_message_t *request = (request_pravsend_message_t *)req;                              
     fprintf(stderr, "%s want send pravite message to  %s \n",request->username, request->target_name);    
-    box_t *tmp = server.queuee->head;                                                                                                  
+    box_t *tmp = server.queuee->head;
     while (strcmp(tmp->boxowner, request->target_name) != 0) {                                                                         
         tmp = tmp->next;                                                                                                            
     }                                                                                                                               
@@ -224,8 +224,8 @@ proto_head_t *process_pravsend_message(proto_head_t *req)
             strncpy(tmp->contents[i].username, request->username, USERNAME_LEN);
             strncpy(tmp->contents[i].friendname, request->target_name, USERNAME_LEN);
             strncpy(tmp->contents[i].message, request->messgae, USERNAME_LEN);
+            break;                                                                                                                      
         }                                                                                                                           
-        break;                                                                                                                      
     }                                                                                                                               
     printf("message is %s\n", tmp->contents[i].message);
     return (proto_head_t *)create_response_status(0, "消息发送成功");                             
@@ -270,12 +270,13 @@ proto_head_t *process_pull_pravmess(proto_head_t *req)
     while (strcmp(tmp->boxowner, request->username) != 0) {                                                                           
         tmp = tmp->next;                                                                                                              
     }                                                                                                                                 
+
     int i;                                                                                                                            
     for (i = 0; i < MAX_HISTORY_MESSAGE; i++) {                                                                                       
         if (tmp->contents[i].type == PRAV && tmp->contents[i].doo == 0) {                                                 
             tmp->contents[i].doo = 1;                                                                                                 
             return (proto_head_t *)create_response_pull_prav(tmp->contents[i].username, tmp->contents[i].friendname, tmp->contents[i].message);
-            break;                                                                                                                             
+            //break;                                                                                                                             
         }                                                                                                                             
     }                                                                                                                                 
     if (i == MAX_HISTORY_MESSAGE) {                                                                                                   
@@ -439,12 +440,76 @@ proto_head_t *process_pull_groupmess(proto_head_t *req)
     return (proto_head_t *)create_response_groupmessage(temp->username, "完了", temp->group_mess);                             
 }
 
-/*proto_head_t *process_file(proto_head_t *req)
+proto_head_t *process_file(proto_head_t *req)
 {
+    request_send_file_t *request = (request_send_file_t *)req;                             
+    fprintf(stderr, "%s want send file to %s\n",request->username, request->friendname);
+    int i = 0;
+    for (i = 0; i < 500; i++) {
+        server.allfile.fileall[i].bit = 0;
+    }
+    int j = 0;
+    strncpy(server.allfile.username, request->username, USERNAME_LEN);
+    strncpy(server.allfile.friendname, request->friendname, USERNAME_LEN);
+    while (request->num != 0) {
+        write(server.acc_fd, server.allfile.fileall[j].file, MAX_MESSAGE_LEN);
+        printf("%s", server.allfile.fileall[j].file);
+        server.allfile.fileall[j].bit = 1;
+        j++;
+        request->num--;
+    }
+    return (proto_head_t *)create_response_status(0, "文件发送成功");                             
+}
 
+proto_head_t *process_refresh_pravmess(proto_head_t *req)
+{
+    request_refresh_pravmess_t *request = (request_refresh_pravmess_t *)req;                          
+    fprintf(stderr, "%s want refresh his message\n",request->username);
+    box_t *tmp = server.queuee->head;                                                                                                          
+    while (strcmp(tmp->boxowner, request->username) != 0) {                                                                                    
+        tmp = tmp->next;                                                                                                                       
+    }                                                                                                                                          
+    int i;                                                                                                                                     
+    for (i = 0; i < MAX_HISTORY_MESSAGE; i++) {                                                                                                
+        if (tmp->contents[i].doo == 0 && tmp->contents[i].type == FRIEND_APPLICATION) {                                                                      
+            return (proto_head_t *)create_response_status(0, "您有好友申请,请前往消息盒子处理");
+        }                                                                                                                                      
+        if (tmp->contents[i].doo == 0 && tmp->contents[i].type == PRAV) {         
+            return (proto_head_t *)create_response_status(0, "您有私聊消息请前往消息盒子处理");
+        }                                                                                       
+        if (tmp->contents[i].doo == 0 && tmp->contents[i].type == GROUP_) {         
+            return (proto_head_t *)create_response_status(0, "您有群聊消息请前往消息盒子处理");
+        }                                                                                       
+        if (tmp->contents[i].doo == 0 && tmp->contents[i].type == FILEN) {         
+            return (proto_head_t *)create_response_status(0, "您有文件传输请前往消息盒子处理");
+        }                                                                                       
+        if (tmp->contents[i].doo == 0 && tmp->contents[i].type == FRIEND_APPLICATION) {         
+            return (proto_head_t *)create_response_status(0, "您有好友申请,请前往消息盒子处理");
+        }                                                                                       
+    }                                                                                                                                          
+    if (i == MAX_HISTORY_MESSAGE) {                                                                                                            
+        return (proto_head_t *)create_response_status(0, "您暂时没有消息");//                                             
+    }                                                                                                                                          
+                                                                                                                                               
+    return NULL;                                                                                                                               
+}
 
-
-}*/
+proto_head_t *process_prav_refresh(proto_head_t *req)
+{
+    request_refresh_pravmess_t *request = (request_refresh_pravmess_t *)req;
+    fprintf(stderr, "%s want refresh his prav jiemian message\n",request->username);     
+    box_t *tmp = server.queuee->head;                      
+    while (strcmp(tmp->boxowner, request->username) != 0) {
+        tmp = tmp->next;                                   
+    }
+    int i = 0;
+    while(tmp->contents[i].type == PRAV && tmp->contents[i].doo == 0 && tmp->contents[i].bit == 1) {
+        proto_head_t *resp = (proto_head_t *)create_response_pravmessage(tmp->contents[i].friendname, request->username, tmp->contents[i].message);
+        write_to_fd(server.acc_fd, (char *)resp, resp->length);                                                                 
+        i++;
+    }
+    return (proto_head_t *)create_response_pravmessage( "null", "over", "null");                             
+}
 
 proto_head_t *process_user_request(proto_head_t *req, server_t *server) {
 
@@ -498,8 +563,14 @@ proto_head_t *process_user_request(proto_head_t *req, server_t *server) {
         return process_pull_groupmess(req);
         break;
     case 1016:
-//        return process_file(req);
+        return process_file(req);
         break;
+    case 1017:                   
+        return process_refresh_pravmess(req);
+        break;                   
+    case 1018:                               
+        return process_prav_refresh(req);
+        break;                               
     }
         return NULL;
 }

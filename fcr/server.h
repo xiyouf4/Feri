@@ -73,6 +73,7 @@ typedef struct queue_group {
 } queue_group_t;
 
 typedef struct file_content {
+    int bit;
     char file[MAX_MESSAGE_LEN];
 } file_content_t;
 
@@ -87,6 +88,7 @@ typedef struct server {
     int l_fd;
     int acc_fd;
     int ep_fd;
+    file_t allfile;
     queue_group_t *queue_g;
     queue_t *queuee;
     queue_message_t *emm;
