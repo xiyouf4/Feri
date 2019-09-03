@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <sys/epoll.h>
+#include <fcntl.h>
 
 #include "log.h"
 #include "socket.h"
@@ -270,20 +271,23 @@ proto_head_t *process_pull_pravmess(proto_head_t *req)
     while (strcmp(tmp->boxowner, request->username) != 0) {                                                                           
         tmp = tmp->next;                                                                                                              
     }                                                                                                                                 
-
-    int i;                                                                                                                            
-    for (i = 0; i < MAX_HISTORY_MESSAGE; i++) {                                                                                       
-        if (tmp->contents[i].type == PRAV && tmp->contents[i].doo == 0) {                                                 
-            tmp->contents[i].doo = 1;                                                                                                 
-            return (proto_head_t *)create_response_pull_prav(tmp->contents[i].username, tmp->contents[i].friendname, tmp->contents[i].message);
-            //break;                                                                                                                             
+    int i = 0;                                                                                                                            
+    //for (i = 0; i < MAX_HISTORY_MESSAGE; i++) {                                                                                       
+        while (tmp->contents[i].type == PRAV && tmp->contents[i].bit == 1) {                                                 
+            if (tmp->contents[i].doo == 0) {
+                tmp->contents[i].doo = 1;                                                                                                                        
+                proto_head_t *resp = (proto_head_t *)create_response_pull_prav(tmp->contents[i].username, tmp->contents[i].friendname, tmp->contents[i].message);
+                write_to_fd(server.acc_fd, (char *)resp, resp->length);                                                                                          
+                i++;                                                                                                                                             
+            } else if (tmp->contents[i].doo == 1) {
+                i++;
+                continue;
+            }
         }                                                                                                                             
-    }                                                                                                                                 
-    if (i == MAX_HISTORY_MESSAGE) {                                                                                                   
-        return (proto_head_t *)create_response_pull_prav( "null", "null", "暂时没有好友私聊您");//                      
-    }                                                                                                                                 
-
-    return NULL;
+    //}                                                                                                                                 
+    //if (i == MAX_HISTORY_MESSAGE) {                                                                                                   
+        return (proto_head_t *)create_response_pull_prav( "null", "over", "暂时没有好友私聊您");//                      
+    //}                                                                                                                                 
 }
 
 proto_head_t *process_pull_fri_chat_history(proto_head_t *req)
@@ -440,24 +444,35 @@ proto_head_t *process_pull_groupmess(proto_head_t *req)
     return (proto_head_t *)create_response_groupmessage(temp->username, "完了", temp->group_mess);                             
 }
 
-proto_head_t *process_file(proto_head_t *req)
+proto_head_t *process_file(proto_head_t *req, server_t *server)
 {
     request_send_file_t *request = (request_send_file_t *)req;                             
-    fprintf(stderr, "%s want send file to %s\n",request->username, request->friendname);
-    int i = 0;
-    for (i = 0; i < 500; i++) {
-        server.allfile.fileall[i].bit = 0;
+    fprintf(stderr, "%s want send file to %s and num is %d\n",request->username, request->friendname, request->num);
+    int fdfile;
+    fdfile = open("file.txt", O_RDWR|O_TRUNC|O_APPEND);
+    int num = request->num;
+    char rfile[MAX_MESSAGE_LEN];
+    while (num != 0) {
+        read(server->acc_fd, rfile, MAX_MESSAGE_LEN);
+        write(fdfile, rfile, MAX_MESSAGE_LEN);
+        num--;
     }
-    int j = 0;
-    strncpy(server.allfile.username, request->username, USERNAME_LEN);
-    strncpy(server.allfile.friendname, request->friendname, USERNAME_LEN);
-    while (request->num != 0) {
-        write(server.acc_fd, server.allfile.fileall[j].file, MAX_MESSAGE_LEN);
-        printf("%s", server.allfile.fileall[j].file);
-        server.allfile.fileall[j].bit = 1;
-        j++;
-        request->num--;
-    }
+    printf("文件传输成功！！！\n");
+    box_t *tmp = server->queuee->head;                                                                       
+    while (strcmp(tmp->boxowner, request->friendname) != 0) {                                              
+       tmp = tmp->next;                                                                                    
+    }                                                                                                       
+   int i;                                                                                                  
+   for (i = 0; i < MAX_HISTORY_MESSAGE; i++) {                                                             
+       if (tmp->contents[i].bit == 0) {
+           tmp->contents[i].bit = 1;
+           tmp->contents[i].type = FILEN;
+           tmp->contents[i].doo = 0;
+           strncpy(tmp->contents[i].username, request->username, USERNAME_LEN);
+           strncpy(tmp->contents[i].friendname, request->friendname, USERNAME_LEN);
+           break;                                                                                          
+       }                                                                                                   
+   }
     return (proto_head_t *)create_response_status(0, "文件发送成功");                             
 }
 
@@ -503,14 +518,64 @@ proto_head_t *process_prav_refresh(proto_head_t *req)
         tmp = tmp->next;                                   
     }
     int i = 0;
-    while(tmp->contents[i].type == PRAV && tmp->contents[i].doo == 0 && tmp->contents[i].bit == 1) {
-        proto_head_t *resp = (proto_head_t *)create_response_pravmessage(tmp->contents[i].friendname, request->username, tmp->contents[i].message);
-        write_to_fd(server.acc_fd, (char *)resp, resp->length);                                                                 
-        i++;
+    while(tmp->contents[i].type == PRAV && tmp->contents[i].bit == 1) {
+        if (tmp->contents[i].doo == 0) {
+            tmp->contents[i].doo = 1;                                                                                                              
+            proto_head_t *resp = (proto_head_t *)create_response_pravmessage(tmp->contents[i].username, request->username, tmp->contents[i].message);
+            write_to_fd(server.acc_fd, (char *)resp, resp->length);                                                                                  
+            i++;                                                                                                                                     
+        } else if (tmp->contents[i].doo == 1) {
+            i++;
+            continue;
+        }
     }
     return (proto_head_t *)create_response_pravmessage( "null", "over", "null");                             
 }
 
+proto_head_t *process_pull_file(proto_head_t *req)
+{
+    char file[MAX_MESSAGE_LEN];
+    char rfile[MAX_MESSAGE_LEN];    
+    request_pull_file_t *request = (request_pull_file_t*)req;        
+    fprintf(stderr, "%s want pull his file message\n",request->username);
+    int fd;
+    fd = open("file.txt", O_RDONLY);    
+    if (fd < 0) {
+        perror("open err:");
+    }
+    int num = 0;                                  
+    int ret = 0;
+    while ((ret = read(fd, file, MAX_MESSAGE_LEN)) != 0) {
+        if (ret == -1) {
+            perror("file read err:");
+            exit(0);
+        }
+        num += 1;                                 
+    }                  
+    box_t *tmp = server.queuee->head;                                                                                                                
+    while (strcmp(tmp->boxowner, request->username) != 0) {                                                                                          
+        tmp = tmp->next;                                                                                                                             
+    }                                                                                                                                                
+    int i = 0;                                                                                                                                       
+    while (tmp->contents[i].bit == 1 && tmp->contents[i].doo == 0) {                                                                              
+        if (tmp->contents[i].type == FILEN) {
+            tmp->contents[i].doo = 1;
+            proto_head_t *resp = (proto_head_t *)create_response_send_file(request->username, tmp->contents[i].username, num);                             
+            write_to_fd(server.acc_fd, (char *)resp, resp->length);                                                                                  
+            break;
+        } else {
+            i++;
+            continue;
+        }
+    }                                                                                                                                                
+    printf("%d\n", num);
+    int fdd;
+    fdd = open("file.txt", O_RDONLY);
+    while (read(fdd, rfile, MAX_MESSAGE_LEN) != 0) {
+        write(server.acc_fd, rfile, MAX_MESSAGE_LEN);
+    }
+    return (proto_head_t *)create_response_send_file( "null", "null", 0);                             
+}
 proto_head_t *process_user_request(proto_head_t *req, server_t *server) {
 
     switch(req->type) {
@@ -563,7 +628,7 @@ proto_head_t *process_user_request(proto_head_t *req, server_t *server) {
         return process_pull_groupmess(req);
         break;
     case 1016:
-        return process_file(req);
+        return process_file(req,server);
         break;
     case 1017:                   
         return process_refresh_pravmess(req);
@@ -571,6 +636,9 @@ proto_head_t *process_user_request(proto_head_t *req, server_t *server) {
     case 1018:                               
         return process_prav_refresh(req);
         break;                               
+    case 1019:                           
+        return process_pull_file(req);
+        break;                           
     }
         return NULL;
 }

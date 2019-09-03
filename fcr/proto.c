@@ -197,7 +197,13 @@ request_refresh_pravmess_t *create_request_prav_refresh(int pull_type, const cha
     return packet;                                                                                                
 }
 
-
+request_pull_file_t *create_request_pull_file(const char *username)
+{
+    request_pull_file_t *packet = (request_pull_file_t *)malloc(sizeof(request_pull_file_t));
+    init_packet_head(&packet->head, REQ_PULL_FILEN, sizeof(request_pull_file_t));                        
+    strncpy(packet->username, username, USERNAME_LEN);                                                            
+    return packet;                                                                                                
+}
 
 
 
@@ -277,6 +283,14 @@ response_groupmessage_t *create_response_groupmessage(const char *username, cons
     return packet;                                                                                    
 }
 
-
+response_send_file_t *create_response_send_file(const char *username, const char *friendname, int num)
+{
+     response_send_file_t *packet = (response_send_file_t *)malloc(sizeof(response_send_file_t));
+     init_packet_head(&packet->head, RESP_SEND_FEIL, sizeof(response_send_file_t));             
+     strncpy(packet->username, username, USERNAME_LEN);                                       
+     strncpy(packet->friendname, friendname, USERNAME_LEN);                                   
+     packet->num = num;                                                                       
+     return packet;                                                                           
+}
 
 

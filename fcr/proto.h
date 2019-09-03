@@ -27,6 +27,7 @@ typedef enum proto_type_t {
     REQ_SEND_FEIL = 1016,
     REQ_REFRESH_PRAVMESS = 1017,
     REQ_PRAV_REFRESH = 1018,
+    REQ_PULL_FILEN = 1019,
 
     RESP_STATUS = 2001,
     RESP_FRIEND_LIST = 2002,
@@ -171,6 +172,12 @@ typedef struct request_send_file_t {
     int num;
 } request_send_file_t __attribute__((aligned(1)));
 
+typedef struct request_pull_filen_t {              
+    proto_head_t head;                            
+    char username[USERNAME_LEN];                  
+} request_pull_file_t __attribute__((aligned(1)));
+
+
 
 
 
@@ -220,6 +227,16 @@ typedef struct response_pull_fri_chat_history {
     char message[MAX_MESSAGE_LEN];                          
 } response_pull_fri_chat_history_t __attribute__((aligned(1)));
 
+typedef struct response_send_file_t {              
+    proto_head_t head;                            
+    char username[USERNAME_LEN];                  
+    char friendname[USERNAME_LEN];                
+    int num;                                      
+} response_send_file_t __attribute__((aligned(1)));
+
+
+
+
 
 
 
@@ -228,6 +245,8 @@ typedef struct response_pull_fri_chat_history {
 //-----------------------------------------------------------------------------------------------------------------
 
 request_register_t *create_request_register(const char *username, const char *password);
+
+request_pull_file_t *create_request_pull_file(const char *username);
 
 request_login_t *create_request_login(const char *username, const char *password);
 
@@ -281,5 +300,7 @@ response_pull_fri_app_t *create_response_pull_fri_app(int pull_type, const char 
 response_pravmessage_t *create_response_pull_prav(const char *username, const char *target_name, const char *message);
 
 response_pull_fri_chat_history_t *create_response_pull_fri_chat_history(const char *username, const char *target_name, const char *message);
+
+response_send_file_t *create_response_send_file(const char *username, const char *friendname, int num);
 
 #endif

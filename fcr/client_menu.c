@@ -448,8 +448,8 @@ void show_prav_refresh(client_t client)
     if (strcmp(resp->username, "null") == 0) {
         printf("\t对方未回复\n");
     } else {
-        printf("\t%s:\t", resp->username);
-        printf("\t%s:\n", resp->message);
+        printf("\t%s", resp->username);
+        printf("%s:\n", resp->message);
     }
     while (strcmp(resp->target_name, "over") != 0) {
         int nread = FERI_block_read(client.conn_fd, (char *)resp, sizeof(response_pravmessage_t));
@@ -465,8 +465,11 @@ void show_prav_refresh(client_t client)
             log_error("recv from server data error, exit");                                       
             abort();                                                                              
         }                                                                                         
-        printf("\t%s:\t", resp->username);                                                        
-        printf("\t%s:\n", resp->message);                                                         
+        if (strcmp(resp->target_name, "over") == 0) {
+            break;
+        }
+        printf("\t%s:", resp->username);                                                        
+        printf("%s\n", resp->message);                                                         
     }
 }
 
@@ -499,10 +502,10 @@ cli_statusa_t show_pravsend_message(client_t client)
             scanf("%s", message);                                                                           
             response_status_t *resp = user_pravsend_message(&client, client.username, target_name, message);
             if (resp->status == 0) {                                                                        
-                printf("发送成功,");                                                                        
+                printf("\t发送成功,");                                                                        
                 printf("%s\n", resp->message);                                                              
             } else {                                                                                        
-                printf("发送失败\n");                                                                       
+                printf("\t发送失败\n");                                                                       
                 printf("%s\n", resp->message);                                                              
             }                                                                                               
             free(resp);                                                                                     
@@ -654,21 +657,54 @@ messbox_status_t show_pull_fri_prav_menu(client_t client)
         log_error("recv from server data error, exit");                                   
         abort();                                                                          
     }                                                                                     
-    if (strcmp(resp->username, "暂时没有好友私聊您") == 0) {
+    if (strcmp(resp->target_name, "over") == 0) {
         free(req);                                          
         free(resp);                                         
         return INITB;                                       
     }                                                       
-
     printf("%s ：", resp->username);
     printf("%s\n", resp->message);
-    printf("1.回复\n：");
-    printf("2.不回复\n：");
-    //刷新，返回，循环
+    while (strcmp(resp->target_name, "over") != 0) {
+        int nread = FERI_block_read(client.conn_fd, (char *)resp, sizeof(response_pravmessage_t));
+        if (nread != sizeof(response_pravmessage_t)) {                                            
+            log_error("recv from server failed, exit");                                           
+            abort();                                                                              
+        }                                                                                         
+        if (resp->head.type != RESP_PULL_PRAV_MESS) {                                             
+            log_error("recv from server data type != RESP_STATUS, exit");                         
+            abort();                                                                              
+        }                                                                                         
+        if (resp->head.magic != FERI_PROTO_HEAD) {                                                
+            log_error("recv from server data error, exit");                                       
+            abort();                                                                              
+        }                                                                                         
+        if (strcmp(resp->target_name, "over") == 0) {
+            break;
+        }
+        printf("%s ：", resp->username);                                                          
+        printf("%s\n", resp->message);                                                            
+    }
+
+    printf("1.回复\n");
+    printf("2.不回复\n");
+    printf("3.刷新\n");
+    printf("请选择:\n");
     int op;
     scanf("%d", &op);
-    if (op == 1) {
-        show_pravsend_message(client);
+    while (op == 1 || op == 3) {
+        if (op == 1) {
+            show_pravsend_message(client);
+            printf("\t2. 退出\n");
+            scanf("%d", &op);
+        } else if (op == 3) {
+            printf("..........................,,,,,,,,,,,,,,,,,,\n");
+            show_prav_refresh(client);
+            printf("1.回复\n");  
+            printf("2.不回复\n");
+            printf("3.刷新\n");  
+            printf("请选择:\n"); 
+            scanf("%d", &op);
+        }
     }
     return INITB;
 }
@@ -823,7 +859,7 @@ cli_statusa_t send_file_menu(client_t client)
 {
     char file[MAX_MESSAGE_LEN];
     char rfile[MAX_MESSAGE_LEN];
-    printf("小仙女聊天室即将为您发送默认文件\n");
+    printf("fcr聊天室将暂时为您发送默认文件\n");
     char friendname[USERNAME_LEN];
     printf("好友用户名：");
     scanf("%s", friendname);
@@ -833,24 +869,23 @@ cli_statusa_t send_file_menu(client_t client)
         perror("open err:");
     }
     int num = 0;                                  
-    printf("<<<<<<<<<<<<<<<<<<<<<<");
     int ret = 0;
     while ((ret = read(fd, file, MAX_MESSAGE_LEN)) != 0) {
-    printf("@@@<<<<<<<<<<<<<<<<<<<<<<");
-    if (ret == -1) {
-        perror("file read err:");
-        exit(0);
-    }
-    num += 1;                                 
+        if (ret == -1) {
+            perror("file read err:");
+            exit(0);
+        }
+        num += 1;                                 
     }                  
-    printf("<<<<<<<<<<<<<<<<<<<<<<");
     request_send_file_t *req = create_request_send_file(client.username, friendname, num);
     uint32_t nwritten = FERI_block_write(client.conn_fd, (char *)req, req->head.length);
     if (nwritten != req->head.length) {                                                  
         log_error("send to server failed, exit");                                        
         abort();                                                                         
     }                                                                                    
-    while (read(fd, file, MAX_MESSAGE_LEN) != 0) {   
+    int fdd;                                   
+    fdd = open("send_file_text.txt", O_RDONLY);
+    while (read(fdd, rfile, MAX_MESSAGE_LEN) != 0) {   
         write(client.conn_fd, rfile, MAX_MESSAGE_LEN);
     }                                                
     response_status_t *resp = (response_status_t *)malloc(sizeof(response_status_t));     
@@ -867,45 +902,64 @@ cli_statusa_t send_file_menu(client_t client)
         log_error("recv from server data error, exit");                                   
         abort();                                                                          
     }                                                                                     
-    printf("%s", resp->message);
+    printf("%s\n", resp->message);
     free(resp);
 
 
-
-
-
-
-
-
     free(req);                                                                            
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     return INITA;
+}
+
+messbox_status_t show_pull_file_menu(client_t client)
+{                                        
+    int fdfile;                                        
+    fdfile = open("test.txt", O_RDWR|O_TRUNC|O_APPEND);
+    char rfile[MAX_MESSAGE_LEN];                       
+
+     request_pull_file_t *req = create_request_pull_file(client.username);
+     uint32_t nwritten = FERI_block_write(client.conn_fd, (char *)req, req->head.length);     
+    if (nwritten != req->head.length) {                                                      
+        log_error("send to server failed, exit");                                            
+        abort();                                                                             
+    }                                                                                        
+    response_send_file_t *resp = (response_send_file_t *)malloc(sizeof(response_send_file_t));        
+    int nread = FERI_block_read(client.conn_fd, (char *)resp, sizeof(response_send_file_t));    
+    if (nread != sizeof(response_send_file_t)) {                                                
+        log_error("recv from server failed, exit");                                          
+        abort();                                                                             
+    }                                                                                        
+    if (resp->head.type != RESP_SEND_FEIL) {                                                    
+        log_error("recv from server data type != RESP_STATUS, exit");                        
+        abort();                                                                             
+    }                                                                                        
+    if (resp->head.magic != FERI_PROTO_HEAD) {                                               
+        log_error("recv from server data error, exit");                                      
+        abort();                                                                             
+    }                                                                                        
+    printf("\t你将要接收 %s 发给您的文件\n", resp->friendname);
+    int num = resp->num;
+    while (num != 0) {
+        read(client.conn_fd, rfile, MAX_MESSAGE_LEN);
+        write(fdfile, rfile, MAX_MESSAGE_LEN);
+        num--;
+    }
+    resp = (response_send_file_t *)malloc(sizeof(response_send_file_t));        
+    nread = FERI_block_read(client.conn_fd, (char *)resp, sizeof(response_send_file_t));    
+    if (resp->num == 0) {
+        printf("\t接收成功\n");
+    }
+    free(req);                                                                               
+    free(resp);
+    return INITB;
 }
 
 messbox_status_t messbox_init_menu()                   
 {                                               
     printf("-----------------------------\n");  
     printf("\t1. 好友申请\n");                      
-    //printf("\t2. 加群申请\n");                      
     printf("\t3. 好友消息\n");                      
     printf("\t4. 群消息\n");                      
     printf("\t5. 文件消息\n");                      
-    //printf("\t6. 群通知\n");                      
     printf("\t7. 退出\n");                      
     printf("-----------------------------\n\n");
     printf("请选择: ");                         
@@ -921,6 +975,9 @@ messbox_status_t messbox_init_menu()
         case 4:
             return GROUP_;
             break;
+        case 5:           
+            return FILEN;
+            break;        
         case 7:                                 
             return EXITB;                        
             break;
@@ -948,6 +1005,9 @@ cli_statusa_t messbox_show_menu(client_t client)
             case GROUP_:
                 statusb = show_pull_group_menu(client);          
                 break;
+            case FILEN:                               
+                statusb = show_pull_file_menu(client);
+                break;                                 
             case EXITB:                                  
                 break;                                  
             default:                                    
