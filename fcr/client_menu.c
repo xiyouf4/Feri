@@ -1029,7 +1029,7 @@ cli_statusa_t show_login_menua(client_t client)
     printf("\t4. 删除好友\n");
     printf("\t5. 查看好友列表\n");
     printf("\t6. 好友聊天记录\n");
-    printf("\t7. 屏蔽好友消息\n");
+    //printf("\t7. 屏蔽好友消息\n");
     printf("\t8. 创建群\n");
     printf("\t9. 解散群\n");
     printf("\t10. 加群\n");

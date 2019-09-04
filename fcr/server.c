@@ -12,6 +12,7 @@
 #include "socket.h"
 #include "proto.h"
 #include "client_menu.h"
+#include "mysql.h"
 
 void signal_handle(int signal)
 {
@@ -101,11 +102,8 @@ typedef proto_head_t *(*packet_process_ft)(proto_head_t *);//???????????????????
 proto_head_t *process_register(proto_head_t *req)
 {
     request_register_t *request = (request_register_t *)req;
-    fprintf(stderr, "want register, username: %s, password: %s\n", request->username, request->password);
-    if (strcmp(request->username, "zxue") == 0) {
-        fprintf(stderr, "不允许 zxue 注册\n");
-        return (proto_head_t *)create_response_status(1, "user exist!");
-    }//检查此用户名是否已经注册
+    fprintf(stderr, "%s want register, password: %s\n", request->username, request->password);
+    add_to_fcr_register(request->username, request->password);
     return (proto_head_t *)create_response_status(0, "success");
 }
 
@@ -113,7 +111,8 @@ proto_head_t *process_login(proto_head_t *req, server_t *server)
 {
     request_login_t *request = (request_login_t *)req;                                             
     fprintf(stderr, "want login, username: %s, password: %s\n", request->username, request->password);    
-    if(1) {
+    int back = fcr_login(request->username, request->password);
+    if(back == 0) {
         int num = 1;
         users[num].is_login = 1;//在在线链表中将好友变为上线状态
         users[num].fd = server->acc_fd;
@@ -133,20 +132,31 @@ proto_head_t *process_login(proto_head_t *req, server_t *server)
         } else {
             server->queuee->head = server->queuee->tail =box;
         }
-        //fprintf(stderr, ",,,,,,,,,,,,,,,,,,,,,,,,,%s \n", server->queuee->head->next->boxowner);
         return (proto_head_t *)create_response_status(0, "登录成功");
-    } else if (2) {
-//如果核对失败
+    } else if (back == -1) {
         return (proto_head_t *)create_response_status(-1, "密码或账号不正确");
     }
-
+    return NULL;
 }
 
 proto_head_t *process_add_friend(proto_head_t *req, server_t *server)
 {
     request_add_friend_t *request = (request_add_friend_t *)req;                                             
     fprintf(stderr, "%s want add %s to be friend\n", request->username, request->friendname);    
-    for (int i = 1; i < MAX_USER_COUNT; i++) {
+    box_t *tmp = server->queuee->head;                      
+    while (strcmp(tmp->boxowner, request->friendname) != 0) {
+        tmp = tmp->next;                                   
+    }                                                      
+    int i = 0;
+    while (tmp->contents[i].bit != 0) {
+        i++;
+    }
+    tmp->contents[i].bit = 1;
+    tmp->contents[i].type = FRIEND_APPLICATION;
+    tmp->contents[i].doo = 0;
+    strncpy(tmp->contents[i].username, request->username, USERNAME_LEN);    
+    strncpy(tmp->contents[i].friendname, request->friendname, USERNAME_LEN);
+    /*for (int i = 1; i < MAX_USER_COUNT; i++) {
         if (strcmp(request->friendname, users[i].username) == 0) {
             box_t *tmp = server->queuee->head;
             while(strcmp(tmp->boxowner, request->friendname) != 0) {
@@ -160,6 +170,7 @@ proto_head_t *process_add_friend(proto_head_t *req, server_t *server)
                     tmp->contents[j].type = FRIEND_APPLICATION;                                 
                     tmp->contents[j].doo = 0;                                           
                     strncpy(tmp->contents[j].username, request->username, USERNAME_LEN);
+                    strncpy(tmp->contents[j].friendname, request->friendname, USERNAME_LEN);
                     //free(tmp);
                     break;                                                              
                 }                                                                       
@@ -167,7 +178,7 @@ proto_head_t *process_add_friend(proto_head_t *req, server_t *server)
         fprintf(stderr, "line is %d, server.c\n", __LINE__);
             break;
         }
-    }//已将将消息成功写入目标好友的消息盒子中
+    }*///已将将消息成功写入目标好友的消息盒子中
 
    /*for (i = 0; i < MAX_USER_COUNT; i++) {
         if (1strcmp(server->users[i].username, request->friendname) == 0) {
@@ -186,18 +197,17 @@ proto_head_t *process_del_friend(proto_head_t *req)
 {
     request_add_friend_t *request = (request_add_friend_t *)req;                                             
     fprintf(stderr, "%s want delete this %s friend\n",request->username , request->friendname);    
-    //在好友表中找到这两位的好友关系，删除之
+    del_fri_each(request->username, request->friendname);
     return (proto_head_t *)create_response_status(0, "成功删除");
 }
 
 proto_head_t *process_get_friend_list(proto_head_t *req)
 {
-    //char userlist[USERLIST_LEN];
+    char *bu;
     request_get_friend_list_t *request = (request_get_friend_list_t *)req;                                             
     fprintf(stderr, "%s want obtain himself friend list\n",request->username);    
-    //在数据库的好友表中遍历与request->username有关系的用户，加到数组中，用*隔开
-    char userlist[]="nihda*bgfdsc*JHGFDS*UYTRE*hgfds*YTREWQ*";
-    return (proto_head_t *)create_response_friends_list(userlist);
+    bu = get_fri_list(request->username);
+    return (proto_head_t *)create_response_friends_list(bu);
 }
 
 proto_head_t *process_black_friend(proto_head_t *req)                                            
@@ -258,6 +268,7 @@ proto_head_t *process_add_each(proto_head_t *req)
 {
     request_agree_add_each_t *request = (request_agree_add_each_t *)req;                          
     fprintf(stderr, "%s and %s will be friends\n",request->username, request->friendname);
+    add_fri_each(request->username, request->friendname);
     //在数据库的好友表中将这两人填入，并且默认互不拉黑
     return NULL;
 }
