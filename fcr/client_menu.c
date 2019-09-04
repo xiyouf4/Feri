@@ -859,12 +859,15 @@ cli_statusa_t send_file_menu(client_t client)
 {
     char file[MAX_MESSAGE_LEN];
     char rfile[MAX_MESSAGE_LEN];
-    printf("fcr聊天室将暂时为您发送默认文件\n");
+    //printf("fcr聊天室将暂时为您发送默认文件\n");
     char friendname[USERNAME_LEN];
+    char filename[USERNAME_LEN];
     printf("好友用户名：");
     scanf("%s", friendname);
+    printf("请输入文件名:\n");
+    scanf("%s", filename);
     int fd;                                                  
-    fd = open("send_file_text.txt", O_RDONLY);
+    fd = open(filename, O_RDONLY);
     if (fd < 0) {
         perror("open err:");
     }
