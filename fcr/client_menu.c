@@ -1028,18 +1028,47 @@ cli_statusa_t group_guan(client_t client)
     free(resp);                                                                            
                                                                                           
     return INITA;
-
-
-
-
-
 }
 
-
-
-
-
-
+cli_statusa_t group_ti(client_t client)                                                       
+{                                                                                               
+    printf("群名：\n");                                                                         
+    char groupname[USERNAME_LEN];                                                               
+    scanf("%s", groupname);                                                                     
+    printf("用户名：\n");                                                                       
+    char username[USERNAME_LEN];                                                                
+    scanf("%s", username);                                                                      
+    request_group_ti_t *req = create_request_group_ti(client.username, username, groupname);
+    uint32_t nwritten = FERI_block_write(client.conn_fd, (char *)req, req->head.length);        
+    if (nwritten != req->head.length) {                                                         
+        log_error("send to server failed, exit");                                               
+        abort();                                                                                
+    }                                                                                           
+    response_status_t *resp = (response_status_t *)malloc(sizeof(response_status_t));           
+    int nread = FERI_block_read(client.conn_fd, (char *)resp, sizeof(response_status_t));       
+    if (nread != sizeof(response_status_t)) {                                                   
+        log_error("recv from server failed, exit");                                             
+        abort();                                                                                
+    }                                                                                           
+    if (resp->head.type != RESP_STATUS) {                                                       
+        log_error("recv from server data type != RESP_STATUS, exit");                           
+        abort();                                                                                
+    }                                                                                           
+    if (resp->head.magic != FERI_PROTO_HEAD) {                                                  
+        log_error("recv from server data error, exit");                                         
+        abort();                                                                                
+    }                                                                                           
+    if (resp->status == 0) {                                                                    
+        printf("%s\n", resp->message);                                                          
+    } else if (resp->status == -1) {                                                            
+        printf("%s\n", resp->message);                                                          
+    }                                                                                           
+                                                                                                
+    free(req);                                                                                  
+    free(resp);                                                                                 
+                                                                                                
+    return INITA;                                                                               
+}                                                                                               
 
 messbox_status_t show_pull_file_menu(client_t client)
 {                                        
@@ -1167,7 +1196,7 @@ cli_statusa_t show_login_menua(client_t client)
     printf("\t11. 退群\n");
     printf("\t12. 群列表\n");
     printf("\t13. 查看群成员\n");
-    //printf("\t14. 群聊天记录\n");
+    printf("\t14. 群聊天记录\n");
     printf("\t15. 设置群管理员\n");
     printf("\t16. 群踢人\n");
     printf("\t17. 消息盒子\n");
@@ -1218,6 +1247,9 @@ cli_statusa_t show_login_menua(client_t client)
     case 15:                
         return GROUP_GUAN;
         break;              
+    case 16:              
+        return GROUP_TI;
+        break;            
     case 17:
         return messbox_show_menu(client);
         break;
@@ -1292,6 +1324,9 @@ void login_show_menu(client_t client)
             case GROUP_GUAN:                      
                 statusa = group_guan(client);
                 break;                              
+            case GROUP_TI:                 
+                statusa = group_ti(client);
+                break;                       
             case EXITA:                                  
                 break;                                  
             default:                                    

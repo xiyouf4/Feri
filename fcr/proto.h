@@ -31,6 +31,7 @@ typedef enum proto_type_t {
     REQ_PULL_GROUP_LIST = 1020,
     REQ_PULL_GROUP_M = 1021,
     REQ_GROUP_GUAN = 1022,
+    REQ_GROUP_TI = 1023,
 
     RESP_STATUS = 2001,
     RESP_FRIEND_LIST = 2002,
@@ -197,7 +198,12 @@ typedef struct request_group_guan_t {
     char groupname[USERNAME_LEN];                    
 } request_group_guan_t __attribute__((aligned(1)));
 
-
+typedef struct request_group_ti_t {              
+    proto_head_t head;                             
+    char ua[USERNAME_LEN];                         
+    char username[USERNAME_LEN];                   
+    char groupname[USERNAME_LEN];                  
+} request_group_ti_t __attribute__((aligned(1)));
 
 
 
@@ -278,6 +284,8 @@ request_pull_group_list_t *create_request_pull_group_list(const char *username);
 request_pull_group_m_t *create_request_pull_group_m(const char *username, char *groupname);
 
 request_group_guan_t *create_request_group_guan(const char *ua, const char *username, char *groupname);
+
+request_group_ti_t *create_request_group_ti(const char *ua, const char *username, char *groupname);
 
 request_login_t *create_request_login(const char *username, const char *password);
 

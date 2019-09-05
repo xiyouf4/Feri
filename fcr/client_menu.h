@@ -25,6 +25,7 @@ typedef enum cli_statusa {
     PULL_GROUP_LIST,
     PULL_GROUP_M,
     GROUP_GUAN,
+    GROUP_TI,
     EXITA,
 } cli_statusa_t;          
 

@@ -232,7 +232,15 @@ request_group_guan_t *create_request_group_guan(const char *ua,const char *usern
     return packet;                                                                                             
 }
 
-
+request_group_ti_t *create_request_group_ti(const char *ua, const char *username, char *groupname)
+{
+    request_group_ti_t *packet = (request_group_ti_t *)malloc(sizeof(request_group_ti_t));
+    init_packet_head(&packet->head, REQ_GROUP_TI, sizeof(request_group_ti_t));              
+    strncpy(packet->username, username, USERNAME_LEN);                                          
+    strncpy(packet->ua, ua, USERNAME_LEN);                                                      
+    strncpy(packet->groupname, groupname, USERNAME_LEN);                                        
+    return packet;                                                                              
+}
 
 //----------------------------------------------------------------------------------------------------------------------------------------------
 

@@ -156,39 +156,6 @@ proto_head_t *process_add_friend(proto_head_t *req, server_t *server)
     tmp->contents[i].doo = 0;
     strncpy(tmp->contents[i].username, request->username, USERNAME_LEN);    
     strncpy(tmp->contents[i].friendname, request->friendname, USERNAME_LEN);
-    /*for (int i = 1; i < MAX_USER_COUNT; i++) {
-        if (strcmp(request->friendname, users[i].username) == 0) {
-            box_t *tmp = server->queuee->head;
-            while(strcmp(tmp->boxowner, request->friendname) != 0) {
-                tmp = tmp->next;
-            }
-            for (int j = 0; j < MAX_HISTORY_MESSAGE; j++){                                  
-                if(tmp->contents[j].bit == 1) {                                         
-                    continue;                                                           
-                } else {                                                                
-                    tmp->contents[j].bit = 1;                                           
-                    tmp->contents[j].type = FRIEND_APPLICATION;                                 
-                    tmp->contents[j].doo = 0;                                           
-                    strncpy(tmp->contents[j].username, request->username, USERNAME_LEN);
-                    strncpy(tmp->contents[j].friendname, request->friendname, USERNAME_LEN);
-                    //free(tmp);
-                    break;                                                              
-                }                                                                       
-            }                                                                           
-        fprintf(stderr, "line is %d, server.c\n", __LINE__);
-            break;
-        }
-    }*///已将将消息成功写入目标好友的消息盒子中
-
-   /*for (i = 0; i < MAX_USER_COUNT; i++) {
-        if (1strcmp(server->users[i].username, request->friendname) == 0) {
-            
-//如果对方同意，将requst->username,reauest->friendname添加进好友表
-        return (proto_head_t *)create_response_status(0, "好友申请发送成功");
-        } else {
-        return (proto_head_t *)create_response_status(1, "对方不在线");
-        }
-    }*/
     return (proto_head_t *)create_response_status(0, "好友申请发送成功");
     return NULL;
 }
@@ -240,6 +207,19 @@ proto_head_t *process_group_guan(proto_head_t *req)
     }
     return NULL;
 }
+
+proto_head_t *process_group_ti(proto_head_t *req)                                                            
+{                                                                                                              
+    request_group_ti_t *request = (request_group_ti_t *)req;                                               
+    fprintf(stderr, "%s want ti %s from  %s group \n",request->ua, request->username, request->groupname);
+    int back = group_ti(request->ua, request->username, request->groupname);                                   
+    if (back == 0) {                                                                                           
+        return (proto_head_t *)create_response_status(0, "成功踢除");                                          
+    } else if (back == -1) {                                                                                   
+        return (proto_head_t *)create_response_status(-1, "您不是群主或者管理员");                                       
+    }                                                                                                          
+    return NULL;                                                                                               
+}                                                                                                              
 
 proto_head_t *process_black_friend(proto_head_t *req)                                            
 {                                                                                              
@@ -693,6 +673,9 @@ proto_head_t *process_user_request(proto_head_t *req, server_t *server) {
     case 1022:                           
         return process_group_guan(req);
         break;                           
+    case 1023:                         
+        return process_group_ti(req);
+        break;                         
     }
         return NULL;
 }
