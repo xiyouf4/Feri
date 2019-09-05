@@ -205,11 +205,32 @@ request_pull_file_t *create_request_pull_file(const char *username)
     return packet;                                                                                                
 }
 
+request_pull_group_list_t *create_request_pull_group_list(const char *username)
+{
+    request_pull_group_list_t *packet = (request_pull_group_list_t *)malloc(sizeof(request_pull_group_list_t));
+    init_packet_head(&packet->head, REQ_PULL_GROUP_LIST, sizeof(request_pull_group_list_t));            
+    strncpy(packet->username, username, USERNAME_LEN);                                       
+    return packet;                                                                           
+}
 
+request_pull_group_m_t *create_request_pull_group_m(const char *username, char *groupname)
+{
+    request_pull_group_m_t *packet = (request_pull_group_m_t *)malloc(sizeof(request_pull_group_m_t));
+    init_packet_head(&packet->head, REQ_PULL_GROUP_M, sizeof(request_pull_group_m_t));                   
+    strncpy(packet->username, username, USERNAME_LEN);                                                         
+    strncpy(packet->groupname, groupname, USERNAME_LEN);                                                         
+    return packet;                                                                                             
+}
 
-
-
-
+request_group_guan_t *create_request_group_guan(const char *ua,const char *username, char *groupname)
+{
+    request_group_guan_t *packet = (request_group_guan_t *)malloc(sizeof(request_group_guan_t));
+    init_packet_head(&packet->head, REQ_GROUP_GUAN, sizeof(request_group_guan_t));                
+    strncpy(packet->username, username, USERNAME_LEN);                                                
+    strncpy(packet->ua, ua, USERNAME_LEN);                                                
+    strncpy(packet->groupname, groupname, USERNAME_LEN);                                              
+    return packet;                                                                                             
+}
 
 
 
@@ -232,6 +253,15 @@ response_friens_list_t *create_response_friends_list(const char *userlist)
     strncpy(packet->userlist, userlist, USERLIST_LEN);
     return packet;
 }
+
+response_group_list_t *create_response_group_list(const char *userlist)
+{
+    response_group_list_t *packet = (response_group_list_t *)malloc(sizeof(response_group_list_t));
+    init_packet_head(&packet->head, RESP_GROUP_LIST, sizeof(response_group_list_t));                
+    strncpy(packet->userlist, userlist, USERLIST_LEN);                                                
+    return packet;                                                                                    
+}
+
 
 response_pravmessage_t *create_response_pravmessage(const char *username, const char *target_name, const char * message)
 {

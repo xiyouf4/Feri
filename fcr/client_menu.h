@@ -22,6 +22,9 @@ typedef enum cli_statusa {
     BACK_group,
     FILEE,
     REFRESH,
+    PULL_GROUP_LIST,
+    PULL_GROUP_M,
+    GROUP_GUAN,
     EXITA,
 } cli_statusa_t;          
 

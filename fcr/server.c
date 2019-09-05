@@ -210,6 +210,37 @@ proto_head_t *process_get_friend_list(proto_head_t *req)
     return (proto_head_t *)create_response_friends_list(bu);
 }
 
+proto_head_t *process_pull_group_list(proto_head_t *req)                      
+{                                                                             
+    char *bu;                                                                 
+    request_pull_group_list_t *request = (request_pull_group_list_t *)req;    
+    fprintf(stderr, "%s want obtain himself group list\n",request->username);
+    bu = get_group_list(request->username);                                     
+    return (proto_head_t *)create_response_group_list(bu);                  
+}                                                                             
+
+proto_head_t *process_pull_group_m(proto_head_t *req)                     
+{                                                                            
+    char *bu;                                                                
+    request_pull_group_m_t *request = (request_pull_group_m_t *)req;   
+    fprintf(stderr, "%s want obtain himself %s group member list\n",request->username, request->groupname);
+    bu = get_group_m(request->groupname);                                  
+    return (proto_head_t *)create_response_group_list(bu);                   
+}                                                                            
+
+proto_head_t *process_group_guan(proto_head_t *req)
+{
+    request_group_guan_t *request = (request_group_guan_t *)req;   
+    fprintf(stderr, "%s want set %s to be %s group guan\n",request->ua, request->username, request->groupname);
+    int back = set_guan(request->ua, request->username, request->groupname);
+    if (back == 0) {
+        return (proto_head_t *)create_response_status(0, "设置成功");                   
+    } else if (back == -1) {
+        return (proto_head_t *)create_response_status(-1, "您不是群主");                   
+    }
+    return NULL;
+}
+
 proto_head_t *process_black_friend(proto_head_t *req)                                            
 {                                                                                              
     request_add_friend_t *request = (request_add_friend_t *)req;                               
@@ -342,6 +373,7 @@ proto_head_t *process_create_group(proto_head_t *req)
     request_create_group_t *request = (request_create_group_t *)req;
     fprintf(stderr, "%s want to create a group named %s", request->username, request->groupname);
 //假设已经创建好了该群
+    create_group(request->groupname, request->username, 1, 1);
     group_box_t *group = (group_box_t *)malloc(sizeof(group_box_t)); 
         for (int i = 0; i < MAX_GROUP_MESSNUM; i++) {              
             group->group_messnum->flag = 0;
@@ -375,6 +407,7 @@ proto_head_t *process_add_group(proto_head_t *req)
 {
     request_add_group_t *request = (request_add_group_t *)req;                             
     fprintf(stderr, "%s want to add %s group", request->username, request->groupname);
+    come_group(request->groupname, request->username, 0, 0);
     group_box_t *tmp = server.queue_g->first;
     while (strncmp(tmp->groupname, request->groupname, USERNAME_LEN) != 0) {
         tmp = tmp->next;
@@ -394,6 +427,7 @@ proto_head_t *process_back_group(proto_head_t *req)
 {
     request_back_group_t *request = (request_back_group_t *)req;                           
     fprintf(stderr, "%s want to back %s group", request->username, request->groupname);
+    back_group(request->groupname, request->username);
     group_box_t *tmp = server.queue_g->first;                                 
     while (strncmp(tmp->groupname, request->groupname, USERNAME_LEN) != 0) {  
         tmp = tmp->next;                                                      
@@ -649,6 +683,15 @@ proto_head_t *process_user_request(proto_head_t *req, server_t *server) {
         break;                               
     case 1019:                           
         return process_pull_file(req);
+        break;                           
+    case 1020:                        
+        return process_pull_group_list(req);
+        break;                        
+    case 1021:                              
+        return process_pull_group_m(req);
+        break;                              
+    case 1022:                           
+        return process_group_guan(req);
         break;                           
     }
         return NULL;

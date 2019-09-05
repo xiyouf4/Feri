@@ -28,6 +28,9 @@ typedef enum proto_type_t {
     REQ_REFRESH_PRAVMESS = 1017,
     REQ_PRAV_REFRESH = 1018,
     REQ_PULL_FILEN = 1019,
+    REQ_PULL_GROUP_LIST = 1020,
+    REQ_PULL_GROUP_M = 1021,
+    REQ_GROUP_GUAN = 1022,
 
     RESP_STATUS = 2001,
     RESP_FRIEND_LIST = 2002,
@@ -37,6 +40,7 @@ typedef enum proto_type_t {
     RESP_PULL_PRAV_MESS = 2006,
     RESP_PULL_FRI_CHAT_HISTORY = 2007,
     RESP_SEND_FEIL = 2008,
+    RESP_GROUP_LIST = 2009,
 } proto_type_t;
 
 #define USERNAME_LEN 32
@@ -97,9 +101,7 @@ typedef struct request_pull_fri_app {
     int pull_type;
     char username[USERNAME_LEN];                   
     char friendname[PASSWORD_LEN];                 
-
 } request_pull_fri_app_t __attribute__((aligned(1)));
-
 
 typedef struct request_pravsend_message_t {
     proto_head_t head;
@@ -177,6 +179,26 @@ typedef struct request_pull_filen_t {
     char username[USERNAME_LEN];                  
 } request_pull_file_t __attribute__((aligned(1)));
 
+typedef struct request_pull_group_list_t {             
+    proto_head_t head;                            
+    char username[USERNAME_LEN];                  
+} request_pull_group_list_t __attribute__((aligned(1)));
+
+typedef struct request_pull_group_m_t {              
+    proto_head_t head;                                  
+    char username[USERNAME_LEN];                        
+    char groupname[USERNAME_LEN];                        
+} request_pull_group_m_t __attribute__((aligned(1)));
+
+typedef struct request_group_guan_t {              
+    proto_head_t head;                               
+    char username[USERNAME_LEN];                     
+    char ua[USERNAME_LEN];                     
+    char groupname[USERNAME_LEN];                    
+} request_group_guan_t __attribute__((aligned(1)));
+
+
+
 
 
 
@@ -234,7 +256,10 @@ typedef struct response_send_file_t {
     int num;                                      
 } response_send_file_t __attribute__((aligned(1)));
 
-
+typedef struct response_group_list_t {              
+    proto_head_t head;                               
+    char userlist[USERLIST_LEN];                     
+} response_group_list_t __attribute__((aligned(1)));
 
 
 
@@ -247,6 +272,12 @@ typedef struct response_send_file_t {
 request_register_t *create_request_register(const char *username, const char *password);
 
 request_pull_file_t *create_request_pull_file(const char *username);
+
+request_pull_group_list_t *create_request_pull_group_list(const char *username);
+
+request_pull_group_m_t *create_request_pull_group_m(const char *username, char *groupname);
+
+request_group_guan_t *create_request_group_guan(const char *ua, const char *username, char *groupname);
 
 request_login_t *create_request_login(const char *username, const char *password);
 
@@ -290,6 +321,8 @@ request_send_file_t *create_request_send_file(const char *username, const char *
 response_status_t *create_response_status(int status, const char *msg);
 
 response_friens_list_t *create_response_friends_list(const char *userlist);
+
+response_group_list_t *create_response_group_list(const char *userlist);
 
 response_pravmessage_t *create_response_pravmessage(const char *username, const char *target_name, const char *message);
 
