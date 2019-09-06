@@ -388,7 +388,7 @@ proto_head_t *process_add_group(proto_head_t *req)
     request_add_group_t *request = (request_add_group_t *)req;                             
     fprintf(stderr, "%s want to add %s group", request->username, request->groupname);
     come_group(request->groupname, request->username, 0, 0);
-    group_box_t *tmp = server.queue_g->first;
+    /*group_box_t *tmp = server.queue_g->first;
     while (strncmp(tmp->groupname, request->groupname, USERNAME_LEN) != 0) {
         tmp = tmp->next;
     }
@@ -398,7 +398,7 @@ proto_head_t *process_add_group(proto_head_t *req)
             tmp->member[i].here = 1;
             strncpy(tmp->member[i].username, request->username, USERNAME_LEN);
         }
-    }
+    }*/
 
     return (proto_head_t *)create_response_status(0, "成功加入");
 }
@@ -408,7 +408,7 @@ proto_head_t *process_back_group(proto_head_t *req)
     request_back_group_t *request = (request_back_group_t *)req;                           
     fprintf(stderr, "%s want to back %s group", request->username, request->groupname);
     back_group(request->groupname, request->username);
-    group_box_t *tmp = server.queue_g->first;                                 
+    /*group_box_t *tmp = server.queue_g->first;                                 
     while (strncmp(tmp->groupname, request->groupname, USERNAME_LEN) != 0) {  
         tmp = tmp->next;                                                      
     }                                                                         
@@ -418,7 +418,7 @@ proto_head_t *process_back_group(proto_head_t *req)
             tmp->member[i].here = 0;
             bzero(tmp->member[i].username, USERNAME_LEN);
         }
-    }                                                                         
+    }*/                                                                         
     return (proto_head_t *)create_response_status(0, "成功退出");
 }
 
@@ -426,7 +426,8 @@ proto_head_t *process_groupsend_message(proto_head_t *req)
 {
     request_groupsend_message_t *request = (request_groupsend_message_t *)req;                          
     fprintf(stderr, "%s want send group message to %s, message is %s \n",request->username, request->target_name, request->messgae);
-    group_box_t *tmp = server.queue_g->first;                                        
+    group_mess(request->target_name, request->username, request->messgae);
+    /*group_box_t *tmp = server.queue_g->first;                                        
     while (strncmp(tmp->groupname, request->target_name, USERNAME_LEN) != 0) {         
         tmp = tmp->next;                                                             
     }                                                                                
@@ -444,16 +445,29 @@ proto_head_t *process_groupsend_message(proto_head_t *req)
         server.emm->z = hist;
     } else {
         server.emm->a = server.emm->z = hist;
-    }
+    }*/
     //fprintf(stderr, ",,,,,,,,,,,,,,,,,,,,%s", server.emm->z->group_mess);
     return (proto_head_t *)create_response_status(0, "消息发送成功");                             
 }
 
 proto_head_t *process_pull_groupmess(proto_head_t *req)
 {
+    MYSQL_ROW row;
+    MYSQL_RES *re;
     request_pull_group_t *request = (request_pull_group_t *)req;                                                     
     fprintf(stderr, "%s want pull %s group message\n",request->username, request->groupname);
-    group_box_t *tmp = server.queue_g->first;                                 
+    re = pull_groupmess(request->groupname);
+    if (mysql_num_rows(re) > 0) {
+        while ((row = mysql_fetch_row(re))){
+            proto_head_t *resp = (proto_head_t *)create_response_groupmessage(row[1], row[0], row[2]);
+            write_to_fd(server.acc_fd, (char *)resp, resp->length);                                                                 
+        }
+        return (proto_head_t *)create_response_groupmessage("null", "完了", "null");                             
+    } else {
+        return (proto_head_t *)create_response_groupmessage("null", "完了", "null");                             
+    }
+    return NULL;
+    /*group_box_t *tmp = server.queue_g->first;                                 
     while (strncmp(tmp->groupname, request->groupname, USERNAME_LEN) != 0) {
         tmp = tmp->next;                                                      
     }       //找到了目标盒子，目标群
@@ -464,9 +478,7 @@ proto_head_t *process_pull_groupmess(proto_head_t *req)
         write_to_fd(server.acc_fd, (char *)resp, resp->length);
         temp = temp->next;
 
-    } while (temp->next != NULL); 
-
-    return (proto_head_t *)create_response_groupmessage(temp->username, "完了", temp->group_mess);                             
+    } while (temp->next != NULL); */
 }
 
 proto_head_t *process_file(proto_head_t *req, server_t *server)
